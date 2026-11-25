@@ -1,0 +1,34 @@
+SCS V965-R3 — repaired V965-R2 with local-first tournament persistence
+
+Deploy the complete contents of this archive to the existing domain root.
+Keep the existing Worker and Supabase schema. No SQL migration is required.
+Refresh/reopen the PWA while online once to receive the updated app shell.
+
+Tournament/event snapshots and tournament court sessions are committed to
+IndexedDB before a save succeeds. A durable account/club-scoped queue retries
+server writes while the app is open and connected. Pending edits survive a
+reload. Newer edits are retained when an older write is acknowledged. Server
+conflicts retain the local copy and show that sync needs attention.
+
+The tournament menu includes Local tournament data: sync status, retry, and
+Export local backup. Export before clearing browser data or reinstalling a PWA.
+Local data is specific to this browser/PWA installation. Other devices see it
+after server synchronization. Closing the PWA can pause synchronization.
+
+Shared court reservations require server confirmation to prevent overlapping
+allocations. Requests are journalled for retry; offline court availability is
+not a confirmed reservation. Scoring passwords, login and official tournament
+engine operations retain their existing server checks. Passwords and login
+session tokens are not stored in the tournament sync queue. Protected score
+sync may require password entry again after a reload.
+
+Existing common tournament assignment and event navigation are preserved.
+Badminton/Pickleball icons and production domain-root paths are unchanged.
+
+Verification: browser integration tests covered offline T1/T2 saves and reload,
+reconnect sync, newer edits during sync, server conflicts, tournament session
+scores/results, password reauthorization, queued deletions, real localStorage
+quota, failed IndexedDB commit/retry, account/club isolation, court request
+replay, local data panel and mobile event opening. Scoring queue and Worker
+algorithm regression tests passed. Backend requests used test fixtures; this
+archive has not been deployed to or verified against production.
