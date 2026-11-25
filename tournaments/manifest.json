@@ -1,0 +1,32 @@
+{
+  "id": "/tournaments/",
+  "name": "SCS Tournaments",
+  "short_name": "Tournaments",
+  "description": "Manage tournaments, events, draws and results",
+  "start_url": "/tournaments/?source=pwa",
+  "scope": "/tournaments/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#071A35",
+  "theme_color": "#0D2D59",
+  "icons": [
+    {
+      "src": "/tournaments/icon-192.png?v=V965-R1",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tournaments/icon-512.png?v=V965-R1",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tournaments/icon-maskable-512.png?v=V965-R1",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
