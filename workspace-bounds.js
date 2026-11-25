@@ -28,6 +28,7 @@
    }
    let edge=screenBottom;
    root.querySelectorAll(bars).forEach(bar=>{watch(bar);if(visible(bar)&&getComputedStyle(bar).position==='fixed')edge=Math.min(edge,bar.getBoundingClientRect().top);});
+   const syncBar=document.getElementById('scsTournamentLocalStatus');if(visible(syncBar))edge=Math.min(edge,syncBar.getBoundingClientRect().top);
    const bottom=Math.max(0,innerHeight-edge);globalBottom=Math.max(globalBottom,bottom);
    set(root,'--scs-workspace-bottom',bottom);set(root,'--scs-workspace-top',top);
    // Content coordinates are relative to a full-viewport shell, never a legacy header offset.

@@ -15,14 +15,38 @@ function koSaveMain(){
  localStorage.setItem(KO_MAIN_KEY,JSON.stringify(koMain));
  if(typeof window.scsQueueTournamentCloudSave==='function')window.SCSTournamentStore.queue('knockout',koMain);
 }
+// Remembering the last opened event is optional navigation state. A local
+// write failure must not prevent the selected event workspace from opening.
+function koRememberOpenedEvent(parent,eventId){
+ queueMicrotask(function(){if(koMain!==parent||koActiveId!==eventId)return;try{koSaveMain()}catch(error){console.warn('Could not remember the opened event:',error);}});
+}
+function koOpenHomeEvent(id){
+ const host=root,item=koMain?.events?.find(e=>String(e.id)===String(id));
+ let status=host?.querySelector('[data-ko-open-status]');
+ if(!status&&host){status=document.createElement('p');status.dataset.koOpenStatus='';status.setAttribute('role','alert');status.style.cssText='padding:12px;border:1px solid #c48d55;border-radius:8px;line-height:1.5;overflow-wrap:anywhere';const home=host.querySelector('.scs-team-event-home');(home||host).prepend(status);}
+ if(status){status.hidden=false;status.textContent='Opening '+(item?.title||'event')+'…';}
+ try{
+  if(!item)throw Error('This event is no longer in the tournament. Refresh the tournament list.');
+  if(item.format==='group'&&typeof window.SCSGroupTournament?.openMixedEvent!=='function')throw Error('The Group event module has not loaded. Reload the app and retry.');
+  koOpenTournamentEvent(item.id,'flowchart');
+  if(status)status.hidden=true;
+ }catch(error){
+  if(host)host.hidden=false;
+  const group=document.getElementById('scsGroupTournament');if(group&&!group.hidden){window.SCSEventCourtPool?.dispose(group);group.hidden=true;}
+  koHome=true;
+  if(status){status.hidden=false;status.textContent='Could not open '+(item?.title||'event')+': '+(error.message||String(error))+' · V965-R2';}
+  console.error('Open tournament event failed:',error);
+ }
+}
 function koIsGroup(id){return !!(koMain&&koMain.events.some(function(e){return e.id===id&&e.format==='group'}))}
 function koOpenGroupEvent(id,tab){
  if(readonly||viewerMode||koMain.status==='completed'){if(root)root.hidden=true;SCSGroupTournament.openLive(koEventLoad(id)||{});SCSGroupTournament.openSection(tab==='match'?'match':tab==='flowchart'?'tournament':'event');return}
- var event=koMain.events.find(function(e){return e.id===id});koActiveId=id;koMain.activeEventId=id;koSaveMain();root.hidden=true;
+ var event=koMain.events.find(function(e){return e.id===id});koActiveId=id;koMain.activeEventId=id;const selectedParent=koMain;root.hidden=true;
  SCSGroupTournament.openMixedEvent(koMain,event,koEventLoad(id),function(state){
   state._scsParentTournamentId=koMain._scsClientTournamentId||koMain.id;state._scsParentTournamentTitle=koMain.title;state._scsEventFormat='group';state._scsParentFormat=mixedParentContext?'group':'knockout';
   localStorage.setItem(koEventKey(id),JSON.stringify(state));event.teams=(state.teamDrafts||[]).length;event.matches=(state.matches||[]).length;event.completed=(state.matches||[]).filter(function(m){return m.status==='approved'}).length;koSaveMain();
  },function(){koShowHome()},tab);
+ koRememberOpenedEvent(selectedParent,id);
 }
 function koEventKey(id){return 'scs_knockout_event_'+id}
 function koDraftKey(){return ASSIST_DRAFT_KEY+(koActiveId?'-'+koActiveId:'')}
@@ -115,7 +139,7 @@ async function koSaveProgressNow(){
   await localTournamentSave(target);
    const id=targetGroupChild?'group-child':await koSaveCloudNow(target,context);
   if(!id)throw Error('Server did not confirm save; local copy retained.');
-  if(indicator)indicator.textContent='✓ Saved to server';return true;
+  if(indicator)indicator.textContent=window.SCSTournamentLocal?SCSTournamentLocal.describe():'✓ Saved to server';return true;
  }catch(e){if(indicator)indicator.textContent='⚠ '+(e.message||'Server save failed; local copy retained.');return false;}
  finally{koManualSaveBusy=false;if(button)button.disabled=false;}
 }
@@ -156,6 +180,7 @@ function koEventCompleted(id){
 function koMainStart(){koMain=koReadMain();if(!koMain){var legacy=null;try{legacy=JSON.parse(localStorage.getItem(LOCAL_TOURNAMENT_KEY)||'null')}catch(_){}koMain={id:koId(),title:legacy&&legacy.title||'Tournament',events:[],activeEventId:null};if(legacy&&legacy.matches&&legacy.matches.length){var id=koId();koMain.events.push({id:id,title:legacy.title||'Knockout Event',matches:legacy.matches.length,completed:Object.keys(legacy.results||{}).length,teams:(legacy.entries||[]).length});koMain.activeEventId=id;localStorage.setItem(koEventKey(id),JSON.stringify(legacy))}koSaveMain()}if(!Array.isArray(koMain.events))koMain.events=[];koActiveId=koMain.events.some(function(e){return e.id===koMain.activeEventId})?koMain.activeEventId:(koMain.events[0]&&koMain.events[0].id)||null;koMain.activeEventId=koActiveId;koSaveMain()}
 function koHomeRender(){
  if(!root)return;
+ if(!root._scsHomeEventDelegate){root._scsHomeEventDelegate=true;root.addEventListener('click',function(event){const button=event.target.closest('[data-ko-open-event]');if(!button||!koHome)return;event.preventDefault();event.stopImmediatePropagation();koOpenHomeEvent(button.dataset.koOpenEvent);},true);}
  ++koRenderRevision; // Cancel deferred event layout work when returning to the parent dashboard.
  const dashboardParent=koMain,dashboardContext=mixedParentContext;
  // The previous event may have been opened read-only. The parent status owns home permissions.
@@ -181,7 +206,7 @@ function koHomeRender(){
   summaryCard.appendChild(status);
   holder.insertAdjacentHTML('beforeend',item.format==='group'?'':koEventHomeDetails(state));summaryCard.insertAdjacentHTML('beforeend','<small class="scs-event-format-caption">'+(item.format==='group'?'Group Stage + Knockout':'Knockout')+'</small>');
   var actions=document.createElement('div');actions.className='scs-ko-event-actions scs-ko-home-card-actions';
-  var openButton=document.createElement('button');openButton.type='button';openButton.className='scs-ko-event-open';openButton.textContent='Open';openButton.setAttribute('aria-label','Open '+(item.title||'event'));openButton.onclick=function(){koOpenTournamentEvent(id,'flowchart')};actions.appendChild(openButton);
+  var openButton=document.createElement('button');openButton.type='button';openButton.className='scs-ko-event-open';openButton.textContent='Open';openButton.setAttribute('aria-label','Open '+(item.title||'event'));openButton.dataset.koOpenEvent=id;openButton.onclick=function(){koOpenHomeEvent(id)};actions.appendChild(openButton);
   if(!readonly&&koMain.status!=='completed'){
    var del=document.createElement('button');del.type='button';del.className='scs-ko-delete-button scs-ko-delete-event';
    del.textContent='Delete';del.dataset.koDeleteEvent=id;
@@ -231,7 +256,7 @@ function koOpenSavedAssist(id){
  creationScreenPinned=false;assistIndex();ensureAssistHeader();
 }
 function koEventRows(events,gender){if(!events.length)return '<p class="scs-ko-empty">No events</p>';return events.map(function(e){var active=e.id===koActiveId;return '<button type="button" class="scs-ko-event-row'+(active?' active':'')+'" onclick="SCSTournament.selectKnockoutEvent(\''+esc(e.id)+'\')"><span class="scs-ko-event-code '+gender+'">'+esc(e.title)+'</span><span class="scs-ko-event-detail"><strong>'+esc(e.title)+'</strong><small>'+(e.teams||0)+' teams · '+(e.completed||0)+'/'+(e.matches||0)+' matches completed</small>'+(active?'<em>✓ Active Event</em>':'')+'</span><span>›</span></button>'}).join('')}
-function koOpenEvent(id,tab){if(koIsGroup(id)){koOpenGroupEvent(id,tab);return}if(!koMain||!koMain.events.some(function(e){return e.id===id}))return;var saved=koEventLoad(id);var viewCompleted=viewerMode||koMain.status==='completed'||!!(saved&&saved.status==='completed');koActiveId=id;koMain.activeEventId=id;if(!viewCompleted)koSaveMain();koHome=false;window.ScsApi.events.leaveHome(root);tournamentActiveTab=tab||'flowchart';assistSaved=!!(saved&&koAssistHasStarted(saved));draw=saved||restoreAssistDraft()||init();assistStep=!assistSaved&&draw&&draw.assistDraft?Math.max(0,Math.min(4,Number(draw.assistStep)||0)):0;assistAssignmentsConfirmed=!!(draw.assistAssignmentsConfirmed||assistAssignmentsConfirmed);draw.assistAssignmentsConfirmed=assistAssignmentsConfirmed;if(!draw.title)draw.title=koMain.events.find(function(e){return e.id===id}).title;creationScreenPinned=assistSaved&&(!saved||!saved.matches||!saved.matches.length);bracketViewInitialized=false;bracketScrollState=null;readonly=viewCompleted;saveFn=localTournamentSave;clearFn=localTournamentClear;selected=null;ensure();render();observeAssistHeader();if(assistSaved&&!viewCompleted)koResumeOpenedEvent(id,saved)}
+function koOpenEvent(id,tab){if(koIsGroup(id)){koOpenGroupEvent(id,tab);return}if(!koMain||!koMain.events.some(function(e){return e.id===id}))return;var saved=koEventLoad(id);var viewCompleted=viewerMode||koMain.status==='completed'||!!(saved&&saved.status==='completed');koActiveId=id;koMain.activeEventId=id;if(!viewCompleted)koRememberOpenedEvent(koMain,id);koHome=false;window.ScsApi.events.leaveHome(root);tournamentActiveTab=tab||'flowchart';assistSaved=!!(saved&&koAssistHasStarted(saved));draw=saved||restoreAssistDraft()||init();assistStep=!assistSaved&&draw&&draw.assistDraft?Math.max(0,Math.min(4,Number(draw.assistStep)||0)):0;assistAssignmentsConfirmed=!!(draw.assistAssignmentsConfirmed||assistAssignmentsConfirmed);draw.assistAssignmentsConfirmed=assistAssignmentsConfirmed;if(!draw.title)draw.title=koMain.events.find(function(e){return e.id===id}).title;creationScreenPinned=assistSaved&&(!saved||!saved.matches||!saved.matches.length);bracketViewInitialized=false;bracketScrollState=null;readonly=viewCompleted;saveFn=localTournamentSave;clearFn=localTournamentClear;selected=null;ensure();render();observeAssistHeader();if(assistSaved&&!viewCompleted)koResumeOpenedEvent(id,saved)}
 function koOpenTournamentEvent(id,tab){
  if(koIsGroup(id)){koOpenGroupEvent(id,tab);return}
  koOpenEvent(id,tab||'flowchart');
@@ -1363,7 +1388,7 @@ async function assistSaveDraft(){if(readonly)return false;
   if(!id)throw Error('Server did not confirm the save');
   draw._scsCloudTournamentId=id;
   saveAssistDraft();
-  if(msg)msg.textContent='Saved to server ✓';return true;
+  if(msg)msg.textContent=window.SCSTournamentLocal?SCSTournamentLocal.describe():'Saved to server ✓';return true;
  }catch(e){
   saveAssistDraft();
   if(msg)msg.textContent='Saved on this device · Server sync pending';

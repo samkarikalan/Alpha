@@ -472,6 +472,7 @@ async function _scsSaveTournamentOnce(format, state, scoreRetry=0) {
   return id;
 }
 function dbSaveTournamentState(format,state,options={}) {
+  if(window.SCSTournamentLocal)return SCSTournamentLocal.saveTournament(format,state);
   if(!['knockout','group','team'].includes(format)||!state||typeof state!=='object')return Promise.resolve(null);
   const club=getMyClub();
   if(!club?.id)return Promise.reject(new Error('Select a club before saving the tournament.'));
@@ -508,6 +509,7 @@ function _scsOutboxClearIfSame(key,revision){
  if(box[key]&&box[key].revision===revision){delete box[key];_scsOutboxWrite(box)}
 }
 function scsFlushTournamentCloudSaves(){
+ if(window.SCSTournamentLocal)return SCSTournamentLocal.importLegacy().then(()=>SCSTournamentLocal.sync());
  const box=_scsOutboxRead();
  return Promise.all(Object.keys(box).map(async key=>{
   const item=box[key];if(!item||!item.state)return;
@@ -517,6 +519,7 @@ function scsFlushTournamentCloudSaves(){
  }));
 }
 function scsQueueTournamentCloudSave(format,state) {
+ if(window.SCSTournamentLocal){return SCSTournamentLocal.saveTournament(format,state).catch(error=>console.error('Local tournament save failed:',error));}
  if(!['knockout','group','team'].includes(format)||!state||typeof state!=='object')return;
  const club=getMyClub();if(!club?.id)return;
  const key=_scsTournamentSaveKey(club.id,format,state);

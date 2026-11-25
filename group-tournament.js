@@ -128,7 +128,7 @@ async function saveGroupTournamentNow(){
   if(groupEventId===eventId&&clientTournamentId===snapshot._scsClientTournamentId)cloudTournamentId=id;
   const current=JSON.parse(localStorage.getItem(localKey)||'null');
   if(current&&current._scsClientTournamentId===snapshot._scsClientTournamentId){current._scsCloudTournamentId=id;localStorage.setItem(localKey,JSON.stringify(current));if(context&&mixedContext===context&&groupEventId===eventId)context.onSave(current);}
-  if(indicator)indicator.textContent='✓ Saved to server';return true;
+  if(indicator)indicator.textContent=window.SCSTournamentLocal?SCSTournamentLocal.describe():'✓ Saved to server';return true;
  }catch(e){if(indicator)indicator.textContent='⚠ '+(e.message||'Server save failed; local copy retained.');return false;}
  finally{groupSaveBusy=false;if(button)button.disabled=false;}
 }

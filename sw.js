@@ -1,22 +1,23 @@
 // SCS_BUILD_50_MYHUB_EMBEDDED_CLUBS_REPORT
 /* Sports Club Scheduler service worker — complete installed-app updates. */
-const CACHE_NAME = 'scs-cache-V965-R1';
-const APP_SHELL = './index.html?v=V965-R1';
+const CACHE_NAME = 'scs-cache-V965-R3';
+const APP_SHELL = './index.html?v=V965-R3';
 
 const ASSETS = [
-  './workspace-bounds.js?v=V965-R1', './tournament-score-sync.js?v=V965-R1', './tournament-courts.js?v=V965-R1', './event-court-pool.js?v=V965-R1',
-  './sport-context.js?v=V939', './single-login.js?v=V939', './scoreboard-app.js?v=V965-R1', './sport-pwa.js?v=V939', './slot-options.js?v=V939',
-  '/badminton/index.html?v=V965-R1', '/pickleball/index.html?v=V965-R1', '/scoreboard/index.html?v=V965-R1', '/tournaments/index.html?v=V965-R1',
-  '/badminton/manifest.json?v=V939', '/pickleball/manifest.json?v=V939', '/scoreboard/manifest.json?v=V965-R1', '/tournaments/manifest.json?v=V965-R1',
-  ...['badminton','pickleball','scoreboard','tournaments'].flatMap(sport=>['180','192','512','maskable-512'].map(size=>'/'+sport+'/icon-'+size+'.png?v='+(sport==='scoreboard'||sport==='tournaments'?'V965-R1':'V939'))),
+  './tournament-local.js?v=V965-R3',
+  './workspace-bounds.js?v=V965-R3', './tournament-score-sync.js?v=V965-R3', './tournament-courts.js?v=V965-R3', './event-court-pool.js?v=V965-R3',
+  './sport-context.js?v=V939', './single-login.js?v=V939', './scoreboard-app.js?v=V965-R3', './sport-pwa.js?v=V939', './slot-options.js?v=V939',
+  '/badminton/index.html?v=V965-R3', '/pickleball/index.html?v=V965-R3', '/scoreboard/index.html?v=V965-R3', '/tournaments/index.html?v=V965-R3',
+  '/badminton/manifest.json?v=V939', '/pickleball/manifest.json?v=V939', '/scoreboard/manifest.json?v=V965-R3', '/tournaments/manifest.json?v=V965-R3',
+  ...['badminton','pickleball','scoreboard','tournaments'].flatMap(sport=>['180','192','512','maskable-512'].map(size=>'/'+sport+'/icon-'+size+'.png?v='+(sport==='scoreboard'||sport==='tournaments'?'V965-R3':'V939'))),
   './club-sport.js?v=V939',
-  './app.css?v=V965-R1', './round-storage.js?v=V919',
+  './app.css?v=V965-R3', './round-storage.js?v=V919',
   './scs-icon-180.png?v=V921', './scs-icon-192.png?v=V921', './scs-icon-512.png?v=V921', './scs-icon-maskable-512.png?v=V921',
   './sport-theme.js?v=V939',
   APP_SHELL,
   './scs-practice-card-pro.png', './scs-tournament-card-pro.png', './scs-practice-card-textfree.png', './scs-tournament-card-textfree.png',
-  './shared-court-popup.js?v=V965-R1', './scs-api.js?v=V965-R1', './tournament-engine.js?v=V965-R1', './team-tournament.js?v=V965-R1', './shared-match-center.js?v=V965-R1', './group-tournament.js?v=V965-R1', './tournament-team-picker.js?v=V911', './tournament-players-page.js?v=V403', './tournament-bracket.js?v=V965-R1', './pickleball-scoring.js?v=V965-R1', './scoring.js?v=V965-R1', './standalone-scoring.js?v=V965-R1', './court-center.js?v=V965-R1', './offline-db.js?v=V149', './full-schedule.js?v=V626', './snapshot.js?v=V911', './unfinished-rounds.js?v=V939', './supabase.js?v=V965-R1', './auth.js?v=V939',
-  './authUI.js?v=V939', './subscription.js?v=V911', './HomeScreen.js?v=V939', './role-workspaces.js?v=V939', './round-walkthrough.js?v=V911', './scoreboard-walkthrough.js?v=V911', './knockout-walkthrough.js?v=V911', './workspace-help.js?v=V965-R1', './member-home-empty.js?v=V911',
+  './shared-court-popup.js?v=V965-R3', './scs-api.js?v=V965-R3', './tournament-engine.js?v=V965-R3', './team-tournament.js?v=V965-R3', './shared-match-center.js?v=V965-R3', './group-tournament.js?v=V965-R3', './tournament-team-picker.js?v=V911', './tournament-players-page.js?v=V403', './tournament-bracket.js?v=V965-R3', './pickleball-scoring.js?v=V965-R3', './scoring.js?v=V965-R3', './standalone-scoring.js?v=V965-R3', './court-center.js?v=V965-R3', './offline-db.js?v=V149', './full-schedule.js?v=V626', './snapshot.js?v=V911', './unfinished-rounds.js?v=V939', './supabase.js?v=V965-R3', './auth.js?v=V939',
+  './authUI.js?v=V939', './subscription.js?v=V911', './HomeScreen.js?v=V939', './role-workspaces.js?v=V939', './round-walkthrough.js?v=V911', './scoreboard-walkthrough.js?v=V911', './knockout-walkthrough.js?v=V911', './workspace-help.js?v=V965-R3', './member-home-empty.js?v=V911',
   './engjap.js?v=V939', './main.js?v=V919', './games.js?v=V939',
   './round-assistant.js?v=V919', './offline-rounds.js?v=V939', './rounds.js?v=V939', './mbm.js?v=V626', './players.js?v=V919',
   './importPlayers.js?v=V918', './settings.js?v=V911', './summary.js?v=V149',
@@ -61,7 +62,7 @@ self.addEventListener('activate', function(event) {
   );
 });
 
-function sportShell(address){const match=new URL(address).pathname.match(/^\/(badminton|pickleball|scoreboard|tournaments)(?:\/|$)/);return match?'/'+match[1]+'/index.html?v=V965-R1':APP_SHELL;}
+function sportShell(address){const match=new URL(address).pathname.match(/^\/(badminton|pickleball|scoreboard|tournaments)(?:\/|$)/);return match?'/'+match[1]+'/index.html?v=V965-R3':APP_SHELL;}
 
 function isApiRequest(url) {
   return url.includes('supabase.co') || url.includes('workers.dev') ||
