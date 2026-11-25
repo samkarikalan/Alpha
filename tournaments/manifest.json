@@ -11,19 +11,19 @@
   "theme_color": "#0D2D59",
   "icons": [
     {
-      "src": "/tournaments/icon-192.png?v=V965-R1",
+      "src": "/tournaments/icon-192.png?v=V965-R3",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/tournaments/icon-512.png?v=V965-R1",
+      "src": "/tournaments/icon-512.png?v=V965-R3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/tournaments/icon-maskable-512.png?v=V965-R1",
+      "src": "/tournaments/icon-maskable-512.png?v=V965-R3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
