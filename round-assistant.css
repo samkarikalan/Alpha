@@ -1,0 +1,57 @@
+#scsRoundAssistant{position:fixed;inset:0;z-index:2147483000;background:#101521;color:#f1f4fb;overflow-y:auto;font-family:inherit;font-size:max(0.875rem,14px)}
+#scsRoundAssistant .ra-panel{max-width:760px;margin:auto;padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 24px)}
+#scsRoundAssistant header{display:flex;align-items:center;gap:14px;padding-bottom:12px;border-bottom:1px solid #394052}
+#scsRoundAssistant header strong{flex:1;font-size:1.15rem}
+#scsRoundAssistant button{font:inherit;cursor:pointer;color:#f4f5fc;background:#29364b;border:1px solid #53617a;border-radius:10px;min-height:42px;padding:8px 14px}
+#scsRoundAssistant .ra-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#scsRoundAssistant label{display:grid;gap:6px;font-weight:600}
+#scsRoundAssistant input{width:100%;box-sizing:border-box;font:inherit;color:#fff;background:#202b3e;border:1px solid #647089;border-radius:9px;padding:10px}
+#scsRoundAssistant #ra-generate{width:100%;background:#4657a8;font-weight:700}
+#scsRoundAssistant .ra-stats,#scsRoundAssistant .ra-round{margin-top:12px;padding:13px;background:#1b2535;border:1px solid #37465e;border-radius:12px;line-height:1.8}
+#scsRoundAssistant .ra-round strong{display:block;color:#b9caff}
+#scsRoundAssistant .ra-round small{display:block;color:#c4c9d6;font-size:inherit}
+#scsRoundAssistant .ra-player-count{padding:7px 0;border-bottom:1px solid #37465e;overflow-wrap:anywhere}
+/* V670: shared iMode controls, compact player-source switch */
+#scsPlayerSource{margin:6px 0 12px;font-size:max(.875rem,14px)}
+#scsPlayerSource .scs-mode-pill{display:flex;gap:3px;padding:3px;border:1px solid #58627a;border-radius:999px;background:#202b3d}
+#scsPlayerSource .scs-mode-pill button{flex:1;min-width:0;padding:9px 6px;border:0;border-radius:999px;background:transparent;color:#d9e1ee;font:inherit;font-weight:600}
+#scsPlayerSource .scs-mode-pill button.is-active{background:#4c617f;color:white}
+#scsGuestSetup{padding:12px 4px 3px}
+#scsGuestSetup[hidden],#scsGuestMixed[hidden],#scsGuestCountRow[hidden]{display:none!important}
+#scsGuestSetup .scs-guest-input{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#scsGuestSetup input{box-sizing:border-box;width:72px;max-width:100%;padding:8px;border:1px solid #66738b;border-radius:8px;background:#1d2a3e;color:white;font:inherit;text-align:center}
+#scsGuestSetup .scs-guest-mixed{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#scsGuestSetup .scs-guest-mixed label{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#scsGuestPrepare{width:100%;margin-top:10px;padding:10px;border-radius:9px;border:1px solid #7387a5;background:#30415c;color:#fff;font:inherit;font-weight:600}
+#scsGuestPrepare:disabled{opacity:.6}
+#scsGuestStatus{margin:8px 0 0;line-height:1.4;color:#d5e1ef;font-size:max(.875rem,14px)}
+
+#scsGuestSetup .scs-guest-format{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:#e0e6f0}
+#scsGuestSetup .scs-guest-format input{width:18px;height:18px;accent-color:#829fce}
+
+/* V672 — Guest action and shared card preparation state. */
+#scsGuestPrepare{background:#087d80;border:1px solid #39b7b1;color:#fff;font-weight:750;min-height:48px;box-shadow:none}
+#scsGuestPrepare:not(:disabled):active{background:#07676b}
+#orgSchedulingScreen .org-imode-manager-tile.scs-guest-locked{opacity:.43;filter:grayscale(.75);cursor:not-allowed;pointer-events:none}
+#orgSchedulingScreen .org-imode-manager-tile{grid-template-columns:30px minmax(0,1fr) auto 16px;column-gap:7px}
+#orgSchedulingScreen .org-imode-manager-tile [data-i18n]{min-width:0;overflow-wrap:normal;word-break:normal}
+#orgSchedulingScreen .org-imode-manager-tile .org-imode-count-pill{position:static!important;flex:none;min-width:26px;max-width:42px;padding:0 5px;margin:0;font-size:.875rem!important;justify-self:end;white-space:nowrap}
+#orgSchedulingScreen .org-imode-manager-tile .org-imode-manager-arrow{justify-self:end}
+
+/* V673: Guest player type selector; same preparation and editor flow. */
+#scsGuestSetup .scs-guest-type{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:14px;padding:3px;border:1px solid #58627a;border-radius:999px;background:#202b3d}
+#scsGuestSetup .scs-guest-type label{display:block;min-width:0;cursor:pointer}
+#scsGuestSetup .scs-guest-type input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+#scsGuestSetup .scs-guest-type span{display:block;padding:8px 3px;text-align:center;border-radius:999px;color:#d9e1ee;font-weight:650;font-size:max(.875rem,14px)}
+#scsGuestSetup .scs-guest-type input:checked+span{background:#4c617f;color:#fff}
+#scsGuestSetup .scs-guest-type input:focus-visible+span{outline:2px solid #80c6ff;outline-offset:1px}
+
+/* V675: compact Guest card; shared court control remains outside. */
+#scsGuestSetup{margin:12px 0;padding:14px;border:1px solid #414b60;border-radius:14px;background:#171b27}
+#scsGuestSetup .scs-guest-heading{font-weight:700;margin-bottom:12px;color:#f0f3fa}
+#scsGuestSetup .scs-guest-counter-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:55px;color:#edf1f8}
+#scsGuestSetup .scs-guest-stepper{display:flex;align-items:center;justify-content:space-between;min-width:156px;border:1px solid #53617b;border-radius:12px;background:#1b263a;overflow:hidden}
+#scsGuestSetup .scs-guest-stepper button{background:transparent;border:0;color:#f2f5fc;min-width:46px;min-height:44px;font:inherit;font-size:1.3rem}
+#scsGuestSetup .scs-guest-stepper strong{font-size:max(1rem,14px);text-align:center;min-width:30px}
+#scsGuestSetup .scs-guest-summary{margin:12px 0 2px;color:#c4cfdf;font-size:max(.875rem,14px)}
+#scsGuestSetup #scsGuestPrepare{margin-top:12px}

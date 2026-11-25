@@ -1,0 +1,51 @@
+/* V874: sport identity changes shell backgrounds; result/team/status colors retain their meaning. */
+html[data-scs-sport]{--sport-bg:#071A35;--sport-surface:#112A49;--sport-surface2:#193958;--sport-surface3:#234666;--sport-header:#0D2D59;--sport-hero:linear-gradient(135deg,#10498c,#032455);--sport-text:#F1F6FF;--sport-muted:#B1C5E0;--sport-card:#193D68;--sport-line:#617C9F;--sport-selected:#0759CA;--sport-border:#344E70;--sport-accent:#66C5FF}
+html[data-scs-sport="pickleball"]{--sport-bg:#082B24;--sport-surface:#113C32;--sport-surface2:#194B3F;--sport-surface3:#235D4E;--sport-header:#0B4033;--sport-hero:linear-gradient(135deg,#17674F,#07382B);--sport-text:#EFFAF5;--sport-muted:#B0D2C4;--sport-card:#174D3D;--sport-line:#638E7E;--sport-selected:#08734F;--sport-border:#386052;--sport-accent:#6EE2BD}
+html[data-scs-sport].app-light,html[data-scs-sport]:has(body.app-light){--sport-bg:#F3F7FD;--sport-surface:#FFFFFF;--sport-surface2:#E8F0FB;--sport-surface3:#DBE7F6;--sport-text:#102747;--sport-muted:#4F6688;--sport-card:#DCEBFF;--sport-line:#A0ADC1;--sport-border:#C4D3E7;--sport-accent:#0759CA}
+html[data-scs-sport="pickleball"].app-light,html[data-scs-sport="pickleball"]:has(body.app-light){--sport-bg:#F1F8F4;--sport-surface:#FFFFFF;--sport-surface2:#E4F2E9;--sport-surface3:#D4E9DD;--sport-text:#123B2D;--sport-muted:#4B6E5D;--sport-card:#DCEFE2;--sport-line:#97B8A5;--sport-border:#BED7C7;--sport-accent:#08734F}
+html[data-scs-sport],html[data-scs-sport] body{--bg:var(--sport-bg)!important;--surface:var(--sport-surface)!important;--surface2:var(--sport-surface2)!important;--surface3:var(--sport-surface3)!important;--text:var(--sport-text)!important;--text-dim:var(--sport-muted)!important;--muted:var(--sport-muted)!important;--border:var(--sport-border)!important;--border2:var(--sport-line)!important;background:var(--sport-bg)!important;color:var(--sport-text)}
+html:root[data-scs-sport] body:is(body,[class]) :is(.page,#homePageOverlay,#scsActivityHome,#roundsPage,#playersPage,#fixedPairsPage,#settingsPage,#vaultPage,#vaultSlotsPage,#vaultPlayingPage,#vaultRegisterPage,#vaultModifyPage,#vaultRequestsPage,#dashboardPage,#joinClubPage,#scsTournamentManager,#scsTournamentContinue,#scsTournamentLive,#scsTournamentTypePicker,#scsGroupTournament,#scsTournamentOverlay,#scsScoringOverlay,#scsStandalonePage){background:var(--sport-bg)!important}
+html[data-scs-sport] body :is(#scsPracticeSharedHeader,#scsTournamentPersistentHeader,.scs-practice-manager-header,.scs-phase1-ref-header,.rounds-top-bar,#scsPrimaryBottomNav,#scsRoundFiveNav,.scs-primary-bottom-nav,#scsTournamentBottomNav,.scs-tm-bottom-nav,.scs-gt-bottom-nav){background:var(--sport-header)!important;color:#F4FAFF!important;border-color:var(--sport-border)!important}
+html[data-scs-sport] body #scsPracticeSharedHeader .scs-phase1-ref-titlebar{background:var(--sport-header)!important}
+html[data-scs-sport] body :is(.scs-phase1-ref-panel,#scsTournamentSideMenu){background:var(--sport-header)!important;color:#F4FAFF!important}
+html[data-scs-sport] body #scsPracticeSharedHeader .scs-phase1-ref-home{background:var(--sport-header)!important}
+html[data-scs-sport] body #scsRoleWorkspaceChooser{--welcome-body:var(--sport-bg);--welcome-text:var(--sport-text);--welcome-muted:var(--sport-muted);--welcome-card:var(--sport-card);--welcome-line:var(--sport-line);background:var(--sport-bg)!important}
+html[data-scs-sport] body #scsRoleWorkspaceChooser .scs-welcome-hero{background:var(--sport-hero)!important}
+html[data-scs-sport] body #scsRoleWorkspaceChooser [data-scs-sport][aria-pressed="true"]{background:var(--sport-selected)!important;color:#FFF!important}
+html[data-scs-sport] body #scsRoleWorkspaceChooser .scs-central-club-label{color:var(--sport-muted)!important}
+
+html[data-scs-sport] body :is(#scsPrimaryBottomNav,#scsRoundFiveNav,.scs-tm-bottom-nav,.scs-gt-bottom-nav,.scs-shared-bottom-nav) button{color:#F4FAFF!important}
+html[data-scs-sport] body :is(#scsPrimaryBottomNav,#scsRoundFiveNav,.scs-tm-bottom-nav,.scs-gt-bottom-nav) button:is(.is-active,[aria-current="page"]):not(.scs-rn-live){color:#76E2DC!important}
+/* Keep welcome labels legible above legacy button overlays in both themes. */
+html[data-scs-sport] body #scsRoleWorkspaceChooser #scsCentralClubCard>#scsCentralClubName,html[data-scs-sport] body #scsRoleWorkspaceChooser #scsCentralClubCard>.scs-central-club-chevron{color:var(--sport-text)!important;-webkit-text-fill-color:var(--sport-text)!important}
+html[data-scs-sport] body #scsWelcomeEnter{position:relative;isolation:isolate}
+html[data-scs-sport] body #scsWelcomeEnter>*{position:relative;z-index:1;color:#fff!important;-webkit-text-fill-color:#fff!important}
+html[data-scs-sport] body :is(#scsActivityHome,#scsTournamentManager,#myHubHomeView) .scs-tmgr-simple-intro h2,html[data-scs-sport] body #scsActivityHome :is(.scs-club-activity-title,.scs-home-menu-copy strong){color:var(--sport-text)!important}
+html[data-scs-sport] body :is(#scsActivityHome,#scsTournamentManager,#myHubHomeView) .scs-tmgr-simple-intro p,html[data-scs-sport] body #scsActivityHome :is(.scs-club-activity-subtitle,.scs-home-menu-copy small,.scs-home-chevron){color:var(--sport-muted)!important}
+/* V875: legacy non-home shell rules must not leave black areas below short pages. */
+html:root[data-scs-sport],html:root[data-scs-sport] body,html:root[data-scs-sport] body[class]{background:var(--sport-bg)!important;background-color:var(--sport-bg)!important;background-image:none!important}
+html:root[data-scs-sport] body{min-height:100dvh}
+/* Club cards use the sport palette, without a decorative side strip. */
+html[data-scs-sport] body #joinClubPage .clubs-page-shell .jc-club-row.jc-club-item:nth-child(n){box-sizing:border-box;width:100%;text-align:left;background:var(--sport-card)!important;color:var(--sport-text)!important;border:1px solid var(--sport-border)!important;border-left:1px solid var(--sport-border)!important;border-radius:14px!important;margin:0 0 10px;padding:16px 18px;min-height:76px;box-shadow:none!important}
+html[data-scs-sport] body #joinClubPage .clubs-page-shell .jc-club-row.jc-club-item::before{content:none!important;display:none!important;width:0!important;background:none!important}
+html[data-scs-sport] body #joinClubPage .clubs-page-shell .jc-club-item .jc-club-name{color:var(--sport-text)!important}
+html[data-scs-sport] body #joinClubPage .clubs-page-shell .jc-club-item :is(.jc-club-nick,.jc-club-icon){color:var(--sport-muted)!important}
+html[data-scs-sport] body #joinClubPage .clubs-page-shell .jc-club-item .jc-club-badge{background:color-mix(in srgb,var(--sport-text) 10%,transparent)!important;color:var(--sport-text)!important;border:0!important}
+html[data-scs-sport] body #joinClubPage .clubs-page-shell .jc-club-item.jc-selected{border-color:var(--sport-accent)!important}
+/* V876: one flat approval list within each managed club card. */
+html[data-scs-sport] body #joinClubPage .jc-club-item.jc-has-approvals{flex-wrap:wrap}
+html[data-scs-sport] body #joinClubPage .jc-card-approvals{order:4;flex:0 0 100%;min-width:0;margin-top:12px;padding-top:12px;border-top:1px solid var(--sport-border);text-align:left;cursor:default}
+html[data-scs-sport] body #joinClubPage .jc-card-approvals h4{font:700 13px/1.4 system-ui;margin:0 0 6px;color:var(--sport-text)}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 0;border-bottom:1px solid var(--sport-border);background:transparent}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-row:last-child{border-bottom:0;padding-bottom:0}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-copy{flex:1 1 100px;min-width:0}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-copy strong{display:block;color:var(--sport-text);font-size:14px;overflow-wrap:anywhere}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-copy small{display:block;margin-top:3px;color:var(--sport-muted);font-size:12px}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-actions{display:flex;gap:7px;flex:0 0 auto}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-actions button{min-height:40px;margin:0;padding:7px 10px;border-radius:8px;font:650 12px system-ui;cursor:pointer}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-actions [data-review="approve"]{border:1px solid #009c70;background:#00845d;color:#fff}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-actions [data-review="reject"]{border:1px solid #c36677;background:transparent;color:#ffb7c5}
+html[data-scs-sport].app-light body #joinClubPage .jc-card-approval-actions [data-review="reject"]{color:#a52945}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-actions button:disabled{opacity:.5;cursor:wait}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-status{flex:0 0 100%;color:var(--sport-text);font-size:12px}
+html[data-scs-sport] body #joinClubPage .jc-card-approval-load-error{color:var(--sport-muted);font-size:13px}
