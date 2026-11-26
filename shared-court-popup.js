@@ -3,24 +3,24 @@
 let active=null,activeOnClose=null,confirmation=null,confirmationTimer=null;
 function close(reason){if(active){const callback=activeOnClose;active.remove();active=null;activeOnClose=null;if(callback&&reason!=='replace')callback(reason||'cancel');}}
 function clearConfirmation(){if(confirmationTimer){clearTimeout(confirmationTimer);confirmationTimer=null;}if(confirmation){confirmation.remove();confirmation=null;}}
-function showConfirmation(title,court){
+function showConfirmation(title,court,details){
  clearConfirmation();
  const notice=document.createElement('div');notice.className='scs-court-confirmation';notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');
  const panel=document.createElement('div');panel.className='scs-court-confirmation-panel';
  const mark=document.createElement('span');mark.className='scs-court-confirmation-check';mark.textContent='✓';mark.setAttribute('aria-hidden','true');
- const heading=document.createElement('strong');heading.textContent=(typeof t === 'function' ? t('scsCourtAssigned') : "Court Assigned!");
+ const heading=document.createElement('strong');heading.textContent=details?.started?'Assigned + started':(typeof t === 'function' ? t('scsCourtAssigned') : "Court Assigned!");
  const match=document.createElement('div');match.className='scs-court-confirmation-match';match.textContent=String(title||'Match');
- const location=document.createElement('div');location.className='scs-court-confirmation-location';location.textContent='Court '+court+' · Ready to start';
- const hint=document.createElement('div');hint.className='scs-court-confirmation-hint';hint.textContent=(typeof t === 'function' ? t('scsAvailableMatchCenter') : "Available in Match Center");
+ const location=document.createElement('div');location.className='scs-court-confirmation-location';location.textContent='Court '+court+(details?.started?' · Ready for scoring':' · Ready to start');
+ const hint=document.createElement('div');hint.className='scs-court-confirmation-hint';hint.textContent=details?.started?(details.synced?'Available in Scoreboard':'Saved on this device · sync pending'):(typeof t === 'function' ? t('scsAvailableMatchCenter') : "Available in Match Center");
  panel.append(mark,heading,match,location,hint);notice.appendChild(panel);document.body.appendChild(notice);confirmation=notice;
- confirmationTimer=setTimeout(()=>{if(confirmation===notice)clearConfirmation()},1500);
+ confirmationTimer=setTimeout(()=>{if(confirmation===notice)clearConfirmation()},details?.started?(details.synced?1800:4000):1500);
 }
 function open(opts){
  close('replace');clearConfirmation();const o=opts||{},overlay=document.createElement('div');active=overlay;activeOnClose=o.onClose||null;
  overlay.className='scs-court-popup-overlay';overlay.setAttribute('role','presentation');
  const modal=document.createElement('section');modal.className='scs-court-popup';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-label','Assign Court');
  const head=document.createElement('div');head.className='scs-court-popup-head';
- const h=document.createElement('h3');h.textContent=(typeof t === 'function' ? t('scsAssignCourt') : "Assign Court");head.appendChild(h);
+ const h=document.createElement('h3');h.textContent=o.startOnAssign?'Assign + Start':(typeof t === 'function' ? t('scsAssignCourt') : "Assign Court");head.appendChild(h);
  const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Close');x.onclick=()=>{if(!pending)close();};head.appendChild(x);modal.appendChild(head);
  const subtitle=document.createElement('p');subtitle.textContent=String(o.title||'');modal.appendChild(subtitle);
  // Optional organizer password controls. The trusted worker will provide the
@@ -40,11 +40,11 @@ function open(opts){
  }
  const choices=document.createElement('div');choices.className='scs-court-popup-choices';
  const errorStatus=document.createElement('p');errorStatus.setAttribute('role','alert');errorStatus.className='scs-court-assignment-error';modal.appendChild(errorStatus);let pending=false;
- (o.courts||[]).forEach(c=>{const b=document.createElement('button');b.type='button';b.className='scs-court-popup-option';b.disabled=!!c.occupied;b.textContent='Court '+c.number+' · '+(c.occupied?'Occupied':'Free');
+ (o.courts||[]).forEach(c=>{const b=document.createElement('button');b.type='button';b.className='scs-court-popup-option';b.disabled=!!c.occupied;b.textContent='Court '+c.number+' · '+(c.occupied?'Occupied':o.startOnAssign?'Assign + Start':'Free');
  b.onclick=()=>{
   if(b.disabled||pending||active!==overlay)return;
-  pending=true;errorStatus.textContent='';modal.setAttribute('aria-busy','true');choices.querySelectorAll('button').forEach(button=>button.disabled=true);
-  const finish=ok=>{if(active!==overlay)return;if(ok!==false){close('assigned');showConfirmation(o.title,c.number)}else{pending=false;modal.removeAttribute('aria-busy');choices.querySelectorAll('button').forEach((button,i)=>{button.disabled=!!o.courts[i].occupied})}};
+  pending=true;errorStatus.textContent=o.startOnAssign?'Saving and sending to scoreboard…':'';modal.setAttribute('aria-busy','true');choices.querySelectorAll('button').forEach(button=>button.disabled=true);
+  const finish=ok=>{if(active!==overlay)return;if(ok!==false){close('assigned');showConfirmation(o.title,c.number,o.startOnAssign?{started:true,synced:ok?.synced!==false}:null)}else{pending=false;modal.removeAttribute('aria-busy');choices.querySelectorAll('button').forEach((button,i)=>{button.disabled=!!o.courts[i].occupied})}};
   try{const result=o.onChoose&&o.onChoose(c.number);if(result&&typeof result.then==='function')result.then(finish).catch(error=>{errorStatus.textContent=error?.message||'Could not assign this match. Please retry.';finish(false);});else finish(result)}catch(e){console.error('Court assignment failed:',e);errorStatus.textContent=e.message||'Could not assign this match.';finish(false)}
  };choices.appendChild(b)});
  modal.appendChild(choices);

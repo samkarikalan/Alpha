@@ -21,7 +21,13 @@ async function refresh(){
   return true;
  })().finally(()=>{flight=null;});return flight;
 }
-window.SCSTournamentScores={list,update,merge,refresh};
+async function publishAssignment(){
+ if(!window.SCSTournamentLocal)return {synced:false};
+ await SCSTournamentLocal.settled();
+ if(navigator.onLine===false)return {synced:false};
+ try{return {synced:await SCSTournamentLocal.sync()};}catch(error){console.warn('Assignment saved locally; scoreboard sync pending:',error.message);return {synced:false};}
+}
+window.SCSTournamentScores={list,update,merge,refresh,publishAssignment};
 function automatic(){if(!document.hidden&&visibleEvent())refresh().catch(error=>console.warn('Tournament score refresh:',error.message));}
 function buttons(){for(const root of document.querySelectorAll('#scsGroupTournament,#scsTeamTournament')){const header=root.querySelector('.scs-tm-live-center-head');if(!header||header.parentElement.querySelector('[data-tournament-score-refresh]'))continue;const holder=document.createElement('div');holder.style.cssText='display:flex;align-items:center;gap:10px;margin:8px 0 14px';const button=document.createElement('button');button.type='button';button.dataset.tournamentScoreRefresh='';button.textContent='↻ Refresh scores';button.style.cssText='padding:10px 14px;border:1px solid #6382b1;border-radius:9px;background:#23486e;color:white;font:inherit';const status=document.createElement('span');status.setAttribute('role','status');status.style.fontSize='14px';button.onclick=async()=>{button.disabled=true;status.textContent='Refreshing…';try{const ok=await refresh();if(holder.isConnected)status.textContent=ok?'Scores refreshed':'Club or account changed. Refresh again.';}catch(error){if(holder.isConnected)status.textContent=error.message||'Could not refresh scores.';}finally{button.disabled=false;}};holder.append(button,status);header.after(holder);}}
 function init(){buttons();new MutationObserver(buttons).observe(document.body,{childList:true,subtree:true});setInterval(automatic,5000);window.addEventListener('focus',automatic);window.addEventListener('online',automatic);document.addEventListener('visibilitychange',automatic);}

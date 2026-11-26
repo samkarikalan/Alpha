@@ -70,7 +70,7 @@ function assignmentModel(options,states,sessions){
 }
 function assignmentMarkup(data,events,selected,viewOnly){
  const items=data.items.filter(m=>!selected||String(m.event.id)===selected),ready=items.filter(m=>!m.reason).length;
- return '<p class="scs-tournament-assignment-summary">'+ready+' ready to assign · '+(items.length-ready)+' waiting</p>'+items.map(m=>'<article class="scs-rev1-assignment" data-assignment-key="'+esc(m.key)+'"><small>#'+m.order+' · '+esc(m.event.title||'Event')+' · '+esc(m.heading)+'</small>'+SCSSharedMatchCenter.waiting({number:m.matchId,left:(m.pairs[0]||[]).join(' / ')||'To be confirmed',right:(m.pairs[1]||[]).join(' / ')||'To be confirmed',label:m.reason||'Assign Court',action:!viewOnly&&!m.reason?'data-tournament-assign="'+esc(m.key)+'"':''})+'</article>').join('')+(items.length?'':'<p>No upcoming matches.</p>');
+ return '<p class="scs-tournament-assignment-summary">'+ready+' ready to assign · '+(items.length-ready)+' waiting</p>'+items.map(m=>'<article class="scs-rev1-assignment" data-assignment-key="'+esc(m.key)+'"><small>#'+m.order+' · '+esc(m.event.title||'Event')+' · '+esc(m.heading)+'</small>'+SCSSharedMatchCenter.waiting({number:m.matchId,left:(m.pairs[0]||[]).join(' / ')||'To be confirmed',right:(m.pairs[1]||[]).join(' / ')||'To be confirmed',label:m.reason||'Assign + Start',action:!viewOnly&&!m.reason?'data-tournament-assign="'+esc(m.key)+'"':''})+'</article>').join('')+(items.length?'':'<p>No upcoming matches.</p>');
 }
 
 function mount(root,options){const config=options.courtDashboard;if(!config)return;const home=root.querySelector('.scs-team-event-home');if(!home||home.querySelector('[data-tournament-home-tabs]'))return;

@@ -428,7 +428,7 @@ function matchCenter(){
  const underApproval=matches.filter(m=>m.status==='score_ready');
  const groupScoreCard=m=>({number:m.id,left:(assignments[m.a]||[]).join(' / '),right:(assignments[m.b]||[]).join(' / '),leftPlayers:assignments[m.a]||[],rightPlayers:assignments[m.b]||[],playerRenderer:groupMatchPlayer,score:groupCompletedScore(m),winner:m.winner==='L'?'left':m.winner==='R'?'right':null,action:m.score?'data-group-completed-score="'+escapeHTML(m.id)+'"':'',actionLabel:m.score?'View Scoreboard':'',cardAction:m.score?'data-group-completed-card="'+escapeHTML(m.id)+'"':''});
  return '<div class="scs-tm-unified-match-center">'+SCSSharedMatchCenter.panel({courtCount,courts,upcomingOnly:true,orderedWaiting:true,tab:matchTab,hideRanking:true,assigning:null,ranking:standings(),
-  waiting:pending.sort((a,b)=>(priority.get(a.id)??99999)-(priority.get(b.id)??99999)).map(m=>({number:m.id,groupIndex:m.group,heading:'Group '+groupLabel(m.group),left:(assignments[m.a]||[]).join(' / '),right:(assignments[m.b]||[]).join(' / '),label:m.court?'Assigned · Court '+m.court:waitingReasons.get(m.id)||'Assign Court',assigned:!!m.court,action:!viewOnly&&!m.court&&m.status==='pending'&&!waitingReasons.get(m.id)?'data-assign="'+escapeHTML(m.id)+'"':''})),
+  waiting:pending.sort((a,b)=>(priority.get(a.id)??99999)-(priority.get(b.id)??99999)).map(m=>({number:m.id,groupIndex:m.group,heading:'Group '+groupLabel(m.group),left:(assignments[m.a]||[]).join(' / '),right:(assignments[m.b]||[]).join(' / '),label:m.court?'Assigned · Court '+m.court:waitingReasons.get(m.id)||'Assign + Start',assigned:!!m.court,action:!viewOnly&&!m.court&&m.status==='pending'&&!waitingReasons.get(m.id)?'data-assign="'+escapeHTML(m.id)+'"':''})),
   underApproval:underApproval.map(groupScoreCard),completed:done.map(groupScoreCard),
   attrs:{change:n=>'data-courts="'+n+'"',choose:n=>'data-choose-court="'+n+'"',cancel:'data-cancel-court',tab:id=>'data-match-tab="'+id+'"'}
  })+'</div>';
@@ -543,14 +543,14 @@ function assignCourt(id,flow){
  const unavailable=SCSTournamentOrder.check(groupSchedulingState(),id);if(unavailable){alert(unavailable);return false;}
  if(teamBusy(m.a)||teamBusy(m.b)){alert('A team is already assigned to another court.');return}
  if(!window.SCSCourtAssignmentPopup?.open){console.error('Shared court assignment popup unavailable');return}
- return SCSCourtAssignmentPopup.open({title:m.id+' · Group '+groupLabel(m.group),onClose:flow?.onClose,
+ return SCSCourtAssignmentPopup.open({startOnAssign:true,title:m.id+' · Group '+groupLabel(m.group),onClose:flow?.onClose,
   loadScoringPassword:()=>window.scsMatchScoringPassword('get',cloudTournamentId,m.id),
   saveScoringPassword:value=>window.scsMatchScoringPassword('set',cloudTournamentId,m.id,value),
   courts:groupCourtIds().map(n=>({number:n,occupied:matches.some(x=>x.court===n&&x.status!=='approved')})),
   onChoose:async n=>{
    if(viewOnly||!started)return false;
    if(SCSTournamentOrder.check(groupSchedulingState(),id)||!groupCourtIds().includes(n)||m.status!=='pending'||m.court||teamBusy(m.a)||teamBusy(m.b)||matches.some(x=>x.court===n&&x.status!=='approved'))return false;
-   m.court=n;m.status='assigned';m.assignedOrder=++assignmentSerial;assigningMatch=null;save();render();if(flow?.afterAssign)await flow.afterAssign();return true;
+   m.court=n;m.status='playing';m.scoringRules=JSON.parse(JSON.stringify(groupEventRules()));m.startedAt=Date.now();m.assignedOrder=++assignmentSerial;assigningMatch=null;save();render();if(flow?.afterAssign)await flow.afterAssign();return await SCSTournamentScores.publishAssignment();
   }
  });
 }
