@@ -1,6 +1,15 @@
 (function(){
 'use strict';
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+const cardStatuses={ready:'Ready',waiting:'Not ready',playing:'In progress',approval:'Under approval',finished:'Finished'};
+function knockoutStage(matches,match){if(!match)return 'Knockout';if(match.third)return 'Third place';if(match.final)return 'Final';const list=(matches||[]).filter(m=>!m.third),final=list.find(m=>m.final)||list.slice().sort((a,b)=>Number(b.round||0)-Number(a.round||0))[0];let current=match,distance=0;const seen=new Set();while(current&&final&&String(current.id)!==String(final.id)&&!seen.has(String(current.id))){seen.add(String(current.id));const source='W'+current.id;current=list.find(m=>String(m.a)===source||String(m.b)===source);distance++;}if(!current||!final||String(current.id)!==String(final.id))distance=Math.max(0,Number(final?.round||1)-Number(match.round||1));return distance===0?'Final':distance===1?'Semi-final':distance===2?'Quarter-final':'Round of '+Math.pow(2,distance+1);}
+function cardScore(score){let sets=[];if(typeof score==='string')sets=[...score.matchAll(/(\d+)\s*[-–—:]\s*(\d+)/g)].map(m=>[m[1],m[2]]);else if(score){sets=(score.completedSets||score.sets||[]).map(s=>Array.isArray(s.score)?s.score:[s.a??s.left,s.b??s.right]).filter(s=>s.length===2&&s.every(n=>Number.isFinite(Number(n))));if(!score.finished&&Array.isArray(score.currentScore))sets.push(score.currentScore);if(!sets.length&&Array.isArray(score.currentScore))sets.push(score.currentScore);}return sets.map(s=>s.map(String));}
+function matchCard(o){const status=Object.hasOwn(cardStatuses,o.status)?o.status:'waiting',label=cardStatuses[status],pairs=o.pairs||[o.leftPlayers||[],o.rightPlayers||[]],names=[o.leftLabel||pairs[0]?.join(' / ')||o.left||'To be confirmed',o.rightLabel||pairs[1]?.join(' / ')||o.right||'To be confirmed'],sets=cardScore(o.score),scored=['playing','approval','finished'].includes(status),approved=status==='finished',winner=approved&&(o.winner==='left'||o.winner==='L')?0:approved&&(o.winner==='right'||o.winner==='R')?1:-1;
+ const title=o.title||[o.eventTitle,o.stage,'Match '+o.number].filter(Boolean).join(' · '),team=i=>'<div class="scs-status-team'+(winner===i?' is-winner':'')+'"><strong>'+esc(names[i])+(winner===i?' <span class="scs-status-trophy" role="img" aria-label="Approved winner">🏆</span>':'')+'</strong><span class="scs-status-score" aria-label="'+(sets.length?'Score':'No score yet')+'">'+(scored?(sets.length?sets.map(s=>'<b>'+esc(s[i]??'–')+'</b>').join(''):status==='playing'?'<b>0</b>':'<b>–</b>'):'<b>–</b>')+'</span></div>';
+ let note=o.note||'';if(!note)note=status==='ready'?'Court available':status==='waiting'?'Waiting for players or earlier results':status==='playing'?(o.court?'Court '+o.court:'Match in progress'):status==='approval'?'Submitted result':winner>=0?'Winner: '+names[winner]:'Approved result';
+ return '<article class="scs-status-match-card'+(o.className?' '+esc(o.className):'')+'" data-match-status="'+status+'"'+(o.attributes?' '+o.attributes:'')+(o.cardAction?' role="button" tabindex="0" '+o.cardAction:'')+'><header class="scs-status-match-head"><h3>'+esc(title)+'</h3><span class="scs-status-badge">'+label+'</span></header><div class="scs-status-match-teams">'+team(0)+'<div class="scs-status-versus"><span>vs</span></div>'+team(1)+'</div><footer class="scs-status-match-foot"><span>'+esc(note)+'</span>'+(o.action?'<button type="button" '+o.action+'>'+esc(o.actionLabel||'View result')+'</button>':'')+'</footer></article>';
+}
+
 function samePlayer(a,b){return String(a||'').trim().toLocaleLowerCase()===String(b||'').trim().toLocaleLowerCase()}
 function serverMark(name,server){return server&&samePlayer(name,server)?'<span class="scs-tm-server-shuttle" title="Serving" aria-label="Serving">🏸</span>':''}
 function playerRows(names,playerRenderer,server){return (names||[]).map(n=>'<span class="scs-tm-serving-player">'+(playerRenderer?playerRenderer(n):esc(n))+serverMark(n,server)+'</span>').join('')}
@@ -16,6 +25,8 @@ function playerIdentity(name,detail){
  return '<span class="scs-match-player-identity"><span class="scs-match-player-name">'+(window.ScsApi&&ScsApi.cards?ScsApi.cards.player(name,''):'<span class="scs-tm-shared-name">'+esc(name)+'</span>')+'</span>'+(label||clubPill?'<span class="scs-match-player-meta">'+label+clubPill+'</span>':'')+'</span>';
 }
 function court(o){
+ if(o.match&&o.matchCards){const m=o.match;return matchCard({status:m.ready?'approval':m.started?'playing':'ready',title:[o.eventTitle,m.label||('Match '+o.number)].filter(Boolean).join(' · '),pairs:[m.left||[],m.right||[]],score:m.scoreData||m.score,winner:m.winner,court:o.number,note:'Court '+o.number+(m.ready?' · Submitted result':''),action:m.action,actionLabel:m.actionLabel,cardAction:m.cardAction});}
+
  if(!o.match)return '<div class="scs-tm-court-card is-free"><div class="scs-tm-court-head"><strong>COURT '+o.number+'</strong><span>FREE</span></div><p>— Empty Court —</p></div>';
  let m=o.match;
  // Once scoring starts, keep each team's score beside that team. This is easier
@@ -24,6 +35,8 @@ function court(o){
  return '<div class="scs-tm-court-card '+(m.ready?'is-ready':'')+'"'+(m.cardAction?' role="button" tabindex="0" '+m.cardAction:'')+'><div class="scs-tm-court-head"><strong>COURT '+o.number+'</strong><span>'+esc(m.status)+'</span></div><small>'+esc(m.label)+'</small><div class="scs-tm-court-teams"><b>'+playerRows(m.left,o.playerRenderer,m.server)+'</b><b>'+playerRows(m.right,o.playerRenderer,m.server)+'</b></div>'+(m.score?'<div class="scs-tm-court-score">'+esc(m.score)+'</div>':'')+(m.action?'<button type="button" class="'+(m.ready?'scs-tm-approve':'scs-tm-score-open')+'" '+m.action+'>'+esc(m.actionLabel)+'</button>':'')+(m.secondaryAction?'<button type="button" class="scs-tm-score-open" '+m.secondaryAction+'>'+esc(m.secondaryLabel)+'</button>':'')+'</div>';
 }
 function waiting(o){
+ if(o.matchCards){const enabled=o.action&&!/^disabled/.test(o.action),status=o.matchStatus||(o.assigned||enabled?'ready':'waiting');return matchCard({status,eventTitle:o.eventTitle,stage:o.heading,number:o.number,left:o.left,right:o.right,note:o.assigned?o.label:status==='ready'?'Court available':/^disabled/.test(o.action||'')?'Start event first':o.label||'Waiting for earlier results',action:enabled?o.action:'',actionLabel:o.label||'Assign + Start'});}
+
  return '<div class="scs-tm-waiting-match"><b>'+esc(o.number)+'</b><span>'+(o.heading?'<small>'+esc(o.heading)+'</small><br>':'')+esc(o.left)+' <em>vs</em> '+esc(o.right)+'</span>'+(o.action?'<button type="button" class="scs-tm-match-assign '+(o.assigned?'is-assigned':'')+'" '+o.action+'>'+esc(o.label)+'</button>':'<strong class="is-progress">'+esc(o.label)+'</strong>')+'</div>';
 }
 // One shared scored-match renderer. Completed, awaiting approval and Conduct Match reuse this exact body.
@@ -37,6 +50,8 @@ function scoredBody(o){
  return '<div class="scs-tm-completed-content"><div class="scs-tm-completed-teams">'+line(o.leftPlayers,o.left,teamScore(0),o.winner==='left',leftLeading)+line(o.rightPlayers,o.right,teamScore(1),o.winner==='right',rightLeading)+'</div>'+(winner?'<div class="scs-tm-completed-winner"><span aria-hidden="true">🏆</span><span><small>Winner</small><b>'+esc(winner)+'</b></span></div>':'')+'</div>';
 }
 function completed(o){
+ if(o.matchCards)return matchCard({status:o.matchStatus||'finished',eventTitle:o.eventTitle,stage:o.title,number:o.number,left:o.left,right:o.right,pairs:[o.leftPlayers||[],o.rightPlayers||[]],score:o.scoreData||o.score,winner:o.winner,action:o.action,actionLabel:o.actionLabel,cardAction:o.cardAction});
+
  const title=o.title||('Match '+esc(o.number));
  const action=o.action?'<button type="button" class="'+esc(o.actionClass||'scs-tm-score-open')+'" '+o.action+'>'+esc(o.actionLabel||'Continue')+'</button>':'';
  return '<article class="scs-tm-completed-row"'+(o.cardAction?' role="button" tabindex="0" '+o.cardAction:'')+'><div class="scs-tm-completed-title"><span class="scs-tm-completed-check">✓</span><b>'+esc(title)+'</b></div>'+scoredBody(o)+action+'</article>';
@@ -60,6 +75,7 @@ function waitingContent(items,ordered){
  }).join('');
 }
 function panel(o){
+ if(o.matchCards){o={...o,courts:(o.courts||[]).map(x=>({...x,matchCards:true,eventTitle:o.eventTitle})),waiting:(o.waiting||[]).map(x=>typeof x==='string'?x:{...x,matchCards:true,eventTitle:o.eventTitle}),underApproval:(o.underApproval||[]).map(x=>({...x,matchCards:true,matchStatus:'approval',eventTitle:o.eventTitle})),completed:(o.completed||[]).map(x=>({...x,matchCards:true,matchStatus:'finished',eventTitle:o.eventTitle}))};}
  const items=o.courts||[],numbers=Array.isArray(o.courtNumbers)?o.courtNumbers:items.length?items.map(c=>c.number):Array.from({length:Math.max(0,Number(o.courtCount)||0)},(_,i)=>i+1),count=numbers.length,wait=o.waiting||[],review=o.underApproval||[],done=o.completed||[];
  const attrs=o.attrs||{};
  const btn=(label,attr,cls)=>'<button type="button" '+attr+(cls?' class="'+cls+'"':'')+'>'+label+'</button>';
@@ -71,5 +87,5 @@ function panel(o){
  if(o.upcomingOnly)return shell+'<details class="scs-tm-upcoming" open><summary><span>Upcoming</span><b>'+wait.length+'</b></summary><div class="scs-tm-upcoming-content">'+(waitingContent(wait,o.orderedWaiting)||'<div class="scs-tm-live-empty">No upcoming matches.</div>')+'</div></details></section>';
  return shell+'<div class="scs-tm-live-tabs">'+tabs.map(([id,label,n])=>btn(label+(n===null?'':' <b>'+n+'</b>'),n===0?'disabled aria-disabled="true" style="opacity:.38;cursor:not-allowed;pointer-events:none"':attrs.tab(id),(current===id?'active ':'')+(n===0?'scs-tm-tab-disabled':''))).join('')+'</div>'+(current==='ranking'?(o.ranking||'<div class="scs-tm-live-empty">Ranking updates from approved results.</div>'):current==='approval'?(review.map(completed).join('')||'<div class="scs-tm-live-empty">No matches awaiting approval.</div>'):current==='completed'?(done.map(completed).join('')||'<div class="scs-tm-live-empty">No approved matches yet.</div>'):(waitingContent(wait,o.orderedWaiting)||'<div class="scs-tm-live-empty">No matches awaiting play.</div>'))+'</section>';
 }
-window.SCSSharedMatchCenter={court,waiting,completed,panel,playerIdentity};
+window.SCSSharedMatchCenter={matchCard,knockoutStage,cardScore,court,waiting,completed,panel,playerIdentity};
 })();
