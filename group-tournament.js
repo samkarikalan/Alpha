@@ -63,24 +63,7 @@ function groupKnockoutPreview(stage){
  return '<div class="scs-gt-matrix-knockout-empty"><h4>'+label+'</h4><p>'+(stage===0?config.top:config.bottom)+' qualifying teams per group</p>'+
  (complete?'<p>Qualified teams from approved group rankings:</p>'+Array.from({length:config.groups},(_,g)=>'<div class="scs-gt-qualified-group"><strong>Group '+groupLabel(g)+'</strong>'+candidates.filter(t=>t.group===g).map(t=>'<p>'+t.rank+'. '+escapeHTML(t.players.join(' / '))+'</p>').join('')+'</div>').join('')+'<button type="button" class="scs-gt-primary scs-gt-knockout-launch" data-group-knockout-continue="'+stage+'">'+(localStorage.getItem('scs_group_knockout_'+groupEventId+'_'+stage)?'Continue Knockout':'Generate Knockout')+'</button>':'<p>Knockout becomes available after all group matches are completed and approved.</p>')+'</div>';
 }
-function groupEventStageHome(id){if(viewOnly)return false;if(groupMain?.events.find(e=>e.id===id)?.format==='knockout'){groupOpenKnockoutEvent(id);return}
- if(!groupMain||!groupMain.events.some(e=>e.id===id))return;
- groupEventId=id;groupMain.activeEventId=id;groupMainSave();groupHome=true;
- const root=el();if(!root)return;
- let data={};try{data=JSON.parse(localStorage.getItem(groupEventKey(id))||'{}')}catch(_){}
- const event=groupMain.events.find(e=>e.id===id);
- const ms=Array.isArray(data.matches)?data.matches:[];
- const complete=groupKnockoutReady(data);
- const count=ms.filter(m=>m.status==='approved').length;
- root.classList.add('scs-api-home-host');
- root.innerHTML='<div class="scs-gt-stage-home"><header><button type="button" data-stage-back>‹ Events</button><h2>'+escapeHTML(event.title||'Group Event')+'</h2></header>'+
- '<div class="scs-gt-stage-tiles"><button type="button" class="scs-gt-stage-tile" data-stage-group><span class="scs-gt-stage-icon">♟</span><strong>Group Stage</strong><small>'+count+' / '+ms.length+' matches completed</small><span class="scs-gt-stage-label">Open Group Stage ›</span></button>'+
- '<button type="button" class="scs-gt-stage-tile scs-gt-stage-knockout" data-stage-knockout '+(complete?'':'disabled')+'><span class="scs-gt-stage-icon">🏆</span><strong>Knockout Stage</strong><small>'+(complete?'Group stage completed':'Locked until all group matches are approved')+'</small><span class="scs-gt-stage-label">Continue to Knockout</span></button></div></div>'+window.ScsApi.navigation.bottom({active:'event',attribute:'data-group-nav',ariaLabel:'Group Stage + Knockout sections',tournamentName:groupMain.title,eventName:event.title});
- groupPageTitle('Event');root.querySelector('[data-stage-back]').textContent='Done';
- root.querySelector('[data-stage-back]').onclick=groupHomeRender;root.querySelectorAll('[data-group-nav]').forEach(b=>b.onclick=()=>{const target=b.dataset.groupNav;if(target==='home')groupHomeRender();else if(target==='event')groupOpenEvent(id,'event');else groupOpenEvent(id,target)});
- root.querySelector('[data-stage-group]').onclick=()=>groupOpenEvent(id,'tournament');
- if(complete)root.querySelector('[data-stage-knockout]').onclick=()=>{groupOpenEvent(id,'tournament');groupKnockoutOpen(0)};
-}
+function groupEventStageHome(id){return groupOpenEvent(id,'event')}
 function groupOpenEvent(id,section){if(groupEventId!==id){eventAssignmentStage='group';eventAssignmentSessions=[];}if(viewOnly)return false;if(groupMain?.events.find(e=>e.id===id)?.format==='knockout'){groupOpenKnockoutEvent(id);return}if(!groupMain.events.some(e=>e.id===id))return;groupEventId=id;groupMain.activeEventId=id;groupMainSave();groupHome=false;window.ScsApi.events.leaveHome(el());applyState(JSON.parse(localStorage.getItem(groupEventKey(id))||'null')||{title:groupMain.events.find(e=>e.id===id).title});assistStep=0;resultsPage='group';resultsGroup=0;resultsExpanded={};tab=section==='event'?'event':section==='clubs'?'players':section==='match'?'match':'main';render()}
 function groupOpenKnockoutEvent(id){
  const event=groupMain.events.find(e=>e.id===id);if(!event||viewOnly)return;groupEventId=id;groupMain.activeEventId=id;groupMainSave();
