@@ -2,14 +2,15 @@
 /* Sports Club Scheduler service worker — complete installed-app updates. */
 const APP_BASE = new URL('./', self.location.href);
 const CACHE_PREFIX = 'scs-repo-cache-' + encodeURIComponent(APP_BASE.pathname) + '-';
-const CACHE_NAME = CACHE_PREFIX + 'paths-6-court-sync';
-const APP_SHELL = './index.html?v=V965-R3';
+const CACHE_NAME = CACHE_PREFIX + 'Rev1';
+const APP_SHELL = './index.html?v=Rev1';
 
 const ASSETS = [
+  './tournament-assignment-order.js?v=Rev1', './tournament-rev1.css?v=Rev1',
   './tournament-local.js?v=V965-R3',
   './workspace-bounds.js?v=V965-R3', './tournament-score-sync.js?v=V965-R3', './tournament-courts.js?v=V965-R3', './event-court-pool.js?v=V965-R3',
   './sport-context.js?v=V939', './single-login.js?v=V939', './scoreboard-app.js?v=V965-R3', './sport-pwa.js?v=V939', './slot-options.js?v=V939',
-  './badminton/index.html?v=V965-R3', './pickleball/index.html?v=V965-R3', './scoreboard/index.html?v=V965-R3', './tournaments/index.html?v=V965-R3',
+  './badminton/index.html?v=Rev1', './pickleball/index.html?v=Rev1', './scoreboard/index.html?v=Rev1', './tournaments/index.html?v=Rev1',
   './badminton/manifest.json?v=V939', './pickleball/manifest.json?v=V939', './scoreboard/manifest.json?v=V965-R3', './tournaments/manifest.json?v=V965-R3',
   ...['badminton','pickleball','scoreboard','tournaments'].flatMap(sport=>['180','192','512','maskable-512'].map(size=>'./'+sport+'/icon-'+size+'.png?v='+(sport==='scoreboard'||sport==='tournaments'?'V965-R3':'V939'))),
   './club-sport.js?v=V939',
@@ -64,7 +65,7 @@ self.addEventListener('activate', function(event) {
   );
 });
 
-function sportShell(address){const path=new URL(address).pathname;if(!path.startsWith(APP_BASE.pathname))return APP_SHELL;const match=path.slice(APP_BASE.pathname.length).match(/^(badminton|pickleball|scoreboard|tournaments)(?:\/|$)/);return match?'./'+match[1]+'/index.html?v=V965-R3':APP_SHELL;}
+function sportShell(address){const path=new URL(address).pathname;if(!path.startsWith(APP_BASE.pathname))return APP_SHELL;const match=path.slice(APP_BASE.pathname.length).match(/^(badminton|pickleball|scoreboard|tournaments)(?:\/|$)/);return match?'./'+match[1]+'/index.html?v=Rev1':APP_SHELL;}
 
 function isApiRequest(url) {
   return url.includes('supabase.co') || url.includes('workers.dev') ||
