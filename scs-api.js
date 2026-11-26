@@ -63,7 +63,7 @@ api.navigation.bottom=function({active='home',attribute='data-team-nav',ariaLabe
  match:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/><rect x="8" y="8" width="8" height="8"/></svg>'
  };
  if(active==='clubs'||active==='teams')active='event';
- const items=[['home','Home',icons.home],['event','Event',icons.event],['tournament','Draw & Results',icons.tournament],['match','Match Center',icons.match]];
+ const items=[['home','Home',icons.home],['event','Event',icons.event],['tournament','Draw & Results',icons.tournament],['match','Assign & Approve',icons.match]];
  return '<nav class="scs-tm-organized-tabs scs-tm-bottom-nav scs-gt-bottom-nav scs-team-bottom-nav scs-four-tab-nav" aria-label="'+esc(ariaLabel)+'">'+items.map(([key,label,icon])=>'<button type="button" '+esc(attribute)+'="'+key+'" class="'+(active===key?'active':'')+'"'+(active===key?' aria-current="page"':'')+'><span class="scs-tm-nav-icon" aria-hidden="true">'+icon+'</span><span class="scs-tm-nav-label">'+label+'</span></button>').join('')+'</nav>';
 };
 api.events.overview=function({name='Event',parent='',format='',sport='',rules='',teams=[],matches=[],courts=null,status=''}={}){

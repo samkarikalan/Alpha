@@ -955,7 +955,7 @@ function openEventSetup(){if(!root)return;switchTournamentTab('main')}
 function eventScheduleControls(){
  var n=SCSEventCourtPool.ids(draw).length;
  if(readonly)return '<h3>Schedule & Courts</h3><p>'+n+' court'+(n===1?'':'s')+'</p><p>'+(draw.live?'Event live':'Event not started')+'</p>';
- return '<h3>Schedule & Courts</h3>'+(draw.live?'<p>'+n+' court'+(n===1?'':'s')+' · Event live</p><button type="button" class="scs-event-open-match" onclick="SCSTournament.openEventMatchCenter()">Open Match Center →</button>':'<p>Select courts, review the draw and scoring rules, then start the event.</p><div class="scs-tm-court-picker" data-event-court-picker><button type="button" aria-label="Fewer courts" onclick="SCSTournament.setTournamentCourts(-1)">−</button><b>'+n+'</b><button type="button" aria-label="More courts" onclick="SCSTournament.setTournamentCourts(1)">+</button></div><button type="button" class="scs-tm-start-live" data-event-start onclick="SCSTournament.startSavedTournament()">▶ Start Event</button>');
+ return '<h3>Schedule & Courts</h3>'+(draw.live?'<p>'+n+' court'+(n===1?'':'s')+' · Event live</p><button type="button" class="scs-event-open-match" onclick="SCSTournament.openEventMatchCenter()">Open Assign &amp; Approve →</button>':'<p>Select courts, review the draw and scoring rules, then start the event.</p><div class="scs-tm-court-picker" data-event-court-picker><button type="button" aria-label="Fewer courts" onclick="SCSTournament.setTournamentCourts(-1)">−</button><b>'+n+'</b><button type="button" aria-label="More courts" onclick="SCSTournament.setTournamentCourts(1)">+</button></div><button type="button" class="scs-tm-start-live" data-event-start onclick="SCSTournament.startSavedTournament()">▶ Start Event</button>');
 }
 function tournamentStartPanel(){
  if(draw.live)return liveTournamentPanel();
@@ -1205,7 +1205,7 @@ function organizeTournamentTabs(){
   if(groupChildMode)bar.querySelectorAll('[data-tm-nav]').forEach(function(btn){if(btn.getAttribute('data-tm-nav')!=='home'&&!tabs.some(function(t){return t[1]===btn.getAttribute('data-tm-nav')}))btn.remove()});
  }else{
   bar=document.createElement('nav');bar.className='scs-tm-organized-tabs scs-tm-bottom-nav';bar.setAttribute('aria-label','Tournament sections');
-   (groupChildMode?[['flowchart','Bracket'],['match','Match Center']]:[['main','Home'],['players','Teams'],['flowchart','Tournament'],['match','Match Center']]).forEach(function(item){var btn=document.createElement('button');btn.type='button';btn.textContent=item[1];btn.setAttribute('data-tm-tab',item[0]);btn.onclick=function(){switchTournamentTab(item[0])};bar.appendChild(btn)});
+   (groupChildMode?[['flowchart','Bracket'],['match','Assign & Approve']]:[['main','Home'],['players','Teams'],['flowchart','Tournament'],['match','Assign & Approve']]).forEach(function(item){var btn=document.createElement('button');btn.type='button';btn.textContent=item[1];btn.setAttribute('data-tm-tab',item[0]);btn.onclick=function(){switchTournamentTab(item[0])};bar.appendChild(btn)});
  }
  bar.querySelectorAll('[data-tm-nav]').forEach(function(btn){var key=btn.getAttribute('data-tm-nav');var found=tabs.find(function(t){return t[1]===key});if(found)btn.setAttribute('data-tm-tab',found[0]);});
  root.insertBefore(bar,root.firstChild);
@@ -1221,7 +1221,7 @@ function organizeTournamentTabs(){
  var fixtureList=document.createElement('div');fixtureList.innerHTML=knockoutFixtureCards();
  // Tournament start is available only from the event's Assist step.
  var tournamentPanel=panel('flowchart',[workspace,hint,details,fixtureList]);
- panel('match',match?[match]:[function(){var empty=document.createElement('section');empty.className='scs-tm-pool';empty.innerHTML='<h3>Match Center</h3><p>Start the knockout tournament to assign courts and conduct matches.</p>';
+ panel('match',match?[match]:[function(){var empty=document.createElement('section');empty.className='scs-tm-pool';empty.innerHTML='<h3>Assign &amp; Approve</h3><p>Start the knockout tournament to assign courts and conduct matches.</p>';
 return empty}()]);
  // Spectators reuse the live Match Center markup but cannot operate any court or match.
  if(readonly&&live){var viewPanel=root.querySelector('[data-tm-panel="match"]');if(viewPanel){viewPanel.querySelectorAll('button').forEach(function(btn){if(!btn.closest('.scs-tm-live-tabs'))btn.remove()});viewPanel.querySelectorAll('[onclick]').forEach(function(node){var call=node.getAttribute('onclick')||'';if(!/^SCSTournament\.liveTab\(/.test(call))node.removeAttribute('onclick')});}}

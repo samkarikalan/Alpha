@@ -83,6 +83,18 @@ function panel(o){
  const tabs=[['waiting','Waiting',wait.length],['approval','Under Approval',review.length],['completed','Completed',done.length]];if(!o.hideRanking)tabs.push(['ranking','Ranking',null]);
  const requested=['waiting','approval','completed','ranking'].includes(o.tab)?o.tab:'waiting';
  const current=tabs.some(([id,,n])=>id===requested&&(n===null||n>0))?requested:(tabs.find(([,,n])=>n===null||n>0)||tabs[0])[0];
+ if(o.matchCards){
+  const active=items.filter(c=>c.match&&!c.match.ready),approval=items.filter(c=>c.match&&c.match.ready),visibleWait=wait.filter(m=>!m.assigned);
+  const identity=(a,b)=>JSON.stringify([a||[],b||[]]);
+  const represented=new Set(approval.map(c=>identity(c.match.left,c.match.right)));
+  const remainingReview=review.filter(m=>!represented.has(identity(m.leftPlayers,m.rightPlayers)));
+  const section=(title,body,n)=>'<section class="scs-event-match-section"><h3>'+title+' · '+n+'</h3>'+(body||'<p class="scs-tm-live-empty">No matches in this category.</p>')+'</section>';
+  return '<section class="scs-tm-live-center"><div class="scs-tm-live-center-head"><h3>Assign &amp; Approve</h3><div class="scs-tm-court-picker scs-tm-live-count">'+btn('−',attrs.change(-1))+'<b>'+count+'</b>'+btn('+',attrs.change(1))+'</div></div>'+chooser+
+   section('Under approval',approval.map(court).join('')+remainingReview.map(completed).join(''),approval.length+remainingReview.length)+
+   section('In progress / Assigned',active.map(court).join(''),active.length)+
+   section('Ready / Not ready',waitingContent(visibleWait,o.orderedWaiting),visibleWait.length)+
+   section('Finished',done.map(completed).join(''),done.length)+'</section>';
+ }
  const shell='<section class="scs-tm-live-center"><div class="scs-tm-live-center-head"><div><small>LIVE TOURNAMENT</small><h3>Courts &amp; Match Assignment</h3></div><div class="scs-tm-court-picker scs-tm-live-count">'+btn('−',attrs.change(-1))+'<b>'+count+'</b>'+btn('+',attrs.change(1))+'</div></div><div class="scs-tm-live-courts">'+numbers.map(n=>{const c=items.find(x=>x.number===n);return court(c||{number:n})}).join('')+'</div>'+chooser;
  if(o.upcomingOnly)return shell+'<details class="scs-tm-upcoming" open><summary><span>Upcoming</span><b>'+wait.length+'</b></summary><div class="scs-tm-upcoming-content">'+(waitingContent(wait,o.orderedWaiting)||'<div class="scs-tm-live-empty">No upcoming matches.</div>')+'</div></details></section>';
  return shell+'<div class="scs-tm-live-tabs">'+tabs.map(([id,label,n])=>btn(label+(n===null?'':' <b>'+n+'</b>'),n===0?'disabled aria-disabled="true" style="opacity:.38;cursor:not-allowed;pointer-events:none"':attrs.tab(id),(current===id?'active ':'')+(n===0?'scs-tm-tab-disabled':''))).join('')+'</div>'+(current==='ranking'?(o.ranking||'<div class="scs-tm-live-empty">Ranking updates from approved results.</div>'):current==='approval'?(review.map(completed).join('')||'<div class="scs-tm-live-empty">No matches awaiting approval.</div>'):current==='completed'?(done.map(completed).join('')||'<div class="scs-tm-live-empty">No approved matches yet.</div>'):(waitingContent(wait,o.orderedWaiting)||'<div class="scs-tm-live-empty">No matches awaiting play.</div>'))+'</section>';
