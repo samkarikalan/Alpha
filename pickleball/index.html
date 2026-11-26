@@ -2,8 +2,8 @@
 <!-- CLUBS v1.7.4 -->
 <html lang="en" data-scs-sport="pickleball" data-scs-sport-app="pickleball">
 <head>
-  <base href="/">
-  <script src="/sport-context.js?v=V939"></script>
+  <base href="../">
+  <script src="sport-context.js?v=V939"></script>
   <script>
     // Build 839: one-time recovery for installed PWAs that still hold an older SCS app shell.
     (function () {
@@ -83,8 +83,8 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <link rel="apple-touch-icon" sizes="180x180" href="/pickleball/icon-180.png?v=V939">
-  <link rel="manifest" href="/pickleball/manifest.json?v=V939">
+  <link rel="apple-touch-icon" sizes="180x180" href="pickleball/icon-180.png?v=V939">
+  <link rel="manifest" href="pickleball/manifest.json?v=V939">
   <meta name="theme-color" content="#0B4033" id="metaThemeColor">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -693,7 +693,7 @@ function scsStartKnockoutTournament(){
       <div class="simple-welcome" aria-label="Choose SCS mode">
         <div class="simple-welcome-header">
           <div class="simple-welcome-brand" aria-label="SCS, scs-app.com">
-            <img class="simple-welcome-logo" src="/pickleball/icon-192.png?v=V939" alt="SCS — Badminton and Pickleball">
+            <img class="simple-welcome-logo" src="pickleball/icon-192.png?v=V939" alt="SCS — Badminton and Pickleball">
             <div class="simple-welcome-brand-copy">
               <strong data-scs-sport-brand>SCS-Badminton</strong>
               <span>scs-app.com</span>
@@ -985,7 +985,7 @@ function scsStartKnockoutTournament(){
 
   <header class="auth-app-header" aria-label="SCS">
     <div class="auth-app-brand">
-      <img src="/pickleball/icon-192.png?v=V939" alt="SCS — Badminton and Pickleball">
+      <img src="pickleball/icon-192.png?v=V939" alt="SCS — Badminton and Pickleball">
       <span><strong data-scs-sport-brand>SCS-Badminton</strong><small>scs-app.com</small></span>
     </div>
     <div class="auth-app-tools">
@@ -3719,7 +3719,7 @@ function scsStartKnockoutTournament(){
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js?v=V965-R3', { scope: '/', updateViaCache: 'none' })
+        navigator.serviceWorker.register(new URL('sw.js?v=repo-paths-1', document.baseURI).href, { scope: new URL('./', document.baseURI).pathname, updateViaCache: 'none' })
           .then(function(reg) {
             console.log('SW registered - CLUBS v' + (window.SCS_APP_VERSION || '1.6.4'));
             // Check once on a clean app load. Do not trigger update checks when
