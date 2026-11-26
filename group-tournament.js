@@ -59,7 +59,7 @@ async function groupKnockoutOpen(stage){if(viewOnly){const saved=JSON.parse(loca
 function groupKnockoutPreview(stage){
  const data={config,assignments,selectedPlayerDetails:groupSelectedPlayerDetails,matches,started};
  const complete=groupKnockoutReady(data),candidates=complete?groupKnockoutCandidates(data,stage):[];
- const label=Number(config.knockouts)===2?(stage===0?'Top Knockout':'Bottom Knockout'):'Knockout';
+ const label=Number(config.knockouts)===2?(stage===0?'KO 1':'KO 2'):'Knockout';
  return '<div class="scs-gt-matrix-knockout-empty"><h4>'+label+'</h4><p>'+(stage===0?config.top:config.bottom)+' qualifying teams per group</p>'+
  (complete?'<p>Qualified teams from approved group rankings:</p>'+Array.from({length:config.groups},(_,g)=>'<div class="scs-gt-qualified-group"><strong>Group '+groupLabel(g)+'</strong>'+candidates.filter(t=>t.group===g).map(t=>'<p>'+t.rank+'. '+escapeHTML(t.players.join(' / '))+'</p>').join('')+'</div>').join('')+'<button type="button" class="scs-gt-primary scs-gt-knockout-launch" data-group-knockout-continue="'+stage+'">'+(localStorage.getItem('scs_group_knockout_'+groupEventId+'_'+stage)?'Continue Knockout':'Generate Knockout')+'</button>':'<p>Knockout becomes available after all group matches are completed and approved.</p>')+'</div>';
 }
@@ -414,8 +414,8 @@ function groupCompletedScore(m){
 }
 let eventAssignmentStage='group',eventAssignmentSessions=[],eventAssignmentCards=[],eventAssignmentRefreshing=false;
 function eventStageTabs(selected,assignment){
- const choices=assignment?[['all','All'],['group','Group Stage']]:[['group','Group Stage']];
- for(let i=0;i<Math.max(1,Math.min(2,Number(config.knockouts)||1));i++)choices.push([String(i),Number(config.knockouts)===2?(i===0?'Top Knockout':'Bottom Knockout'):'Knockout']);
+ const choices=assignment?[['all','All'],['group','Group']]:[['group','Group']];
+ for(let i=0;i<Math.max(1,Math.min(2,Number(config.knockouts)||1));i++)choices.push([String(i),Number(config.knockouts)===2?(i===0?'KO 1':'KO 2'):'Knockout']);
  return '<nav class="scs-results-pages scs-event-stage-tabs" style="--stage-count:'+choices.length+'" aria-label="'+(assignment?'Assignment stages':'Draw and results stages')+'">'+choices.map(([key,label])=>'<button type="button" data-event-stage="'+key+'" data-event-stage-mode="'+(assignment?'match':'draw')+'" aria-pressed="'+(String(selected)===key)+'" class="'+(String(selected)===key?'active':'')+'">'+label+'</button>').join('')+'</nav>';
 }
 async function openEventStage(stage,mode){
@@ -444,7 +444,7 @@ function allEventAssignments(){
  const local=window.SCSCourtCenter?.localSession?.(),sessions=local?[...eventAssignmentSessions,local]:eventAssignmentSessions;
  const ranked=SCSTournamentCourts.assignmentModel(options,states,sessions);
  eventAssignmentCards=SCSTournamentCourts.matchList(options,states,sessions,ranked.items).filter(m=>m.status==='approval'||!m.assigned&&['ready','waiting'].includes(m.status));
- return '<div class="scs-tm-live-center-head"><h3>Assign &amp; Approve</h3><div class="scs-tm-court-picker"><button type="button" data-courts="-1">−</button><b>'+courtCount+'</b><button type="button" data-courts="1">+</button></div></div><button type="button" data-event-assignment-refresh>↻ Refresh matches</button>'+['approval','ready','waiting'].map(status=>'<section><h3>'+({approval:'Under approval',ready:'To be assigned',waiting:'Not ready'}[status])+'</h3>'+eventAssignmentCards.filter(m=>m.status===status).map(m=>SCSSharedMatchCenter.matchCard({status:m.status,title:[title,m.stage!=null?(Number(config.knockouts)===2?(Number(m.stage)===0?'Top Knockout':'Bottom Knockout'):'Knockout'):'Group Stage',m.heading,'Match '+m.matchId].join(' · '),pairs:m.pairs,leftLabel:m.labels?.[0],rightLabel:m.labels?.[1],score:m.score,winner:m.winner,note:m.reason,action:!viewOnly&&status!=='waiting'?'data-event-match-action="'+escapeHTML(m.key)+'"':'',actionLabel:status==='approval'?'Review result':'Assign + Start'})).join('')+'</section>').join('');
+ return '<div class="scs-tm-live-center-head"><h3>Assign &amp; Approve</h3><div class="scs-tm-court-picker"><button type="button" data-courts="-1">−</button><b>'+courtCount+'</b><button type="button" data-courts="1">+</button></div></div><button type="button" data-event-assignment-refresh>↻ Refresh matches</button>'+['approval','ready','waiting'].map(status=>'<section><h3>'+({approval:'Under approval',ready:'To be assigned',waiting:'Not ready'}[status])+'</h3>'+eventAssignmentCards.filter(m=>m.status===status).map(m=>SCSSharedMatchCenter.matchCard({status:m.status,title:[title,m.stage!=null?(Number(config.knockouts)===2?(Number(m.stage)===0?'KO 1':'KO 2'):'Knockout'):'Group Stage',m.heading,'Match '+m.matchId].join(' · '),pairs:m.pairs,leftLabel:m.labels?.[0],rightLabel:m.labels?.[1],score:m.score,winner:m.winner,note:m.reason,action:!viewOnly&&status!=='waiting'?'data-event-match-action="'+escapeHTML(m.key)+'"':'',actionLabel:status==='approval'?'Review result':'Assign + Start'})).join('')+'</section>').join('');
 }
 function matchCenter(){
  if(eventAssignmentStage==='all')return eventStageTabs('all',true)+allEventAssignments();
@@ -472,7 +472,7 @@ function tournamentMatches(){
  if(!started)return card('Matches','Start the tournament to generate fixtures.');
  const selected=String(matchesSection||'group-0');
  const sections=Array.from({length:config.groups},(_,g)=>'<button type="button" data-group-matches-section="group-'+g+'" class="'+(selected==='group-'+g?'active':'')+'">Group '+groupLabel(g)+'</button>').join('');
- const knockoutTabs=Array.from({length:Math.max(1,Math.min(2,Number(config.knockouts)||1))},(_,i)=>'<button type="button" data-group-matches-section="knockout-'+i+'" class="'+(selected==='knockout-'+i?'active':'')+'">'+(config.knockouts===2?(i===0?'Top Knockout':'Bottom Knockout'):'Knockout')+'</button>').join('');
+ const knockoutTabs=Array.from({length:Math.max(1,Math.min(2,Number(config.knockouts)||1))},(_,i)=>'<button type="button" data-group-matches-section="knockout-'+i+'" class="'+(selected==='knockout-'+i?'active':'')+'">'+(config.knockouts===2?(i===0?'KO 1':'KO 2'):'Knockout')+'</button>').join('');
  const tabs='<nav class="scs-gt-matrix-tabs scs-gt-matches-tabs" aria-label="Match groups">'+sections+knockoutTabs+'</nav>';
  const categories=[['all','All'],['finished','Finished'],['live','Live'],['not-started','Not Started']];
  const filters='<nav class="scs-gt-matrix-tabs scs-gt-match-status-tabs" aria-label="Match status">'+categories.map(([id,label])=>'<button type="button" data-group-matches-status="'+id+'" class="'+(matchesStatus===id?'active':'')+'">'+label+'</button>').join('')+'</nav>';
@@ -505,7 +505,7 @@ function standings(){
 // Same matrix classes and bottom-sheet UI as Team Tournament; per-group fixtures.
 function groupMatrix(onlyGroup=null,hideTabs=false){
  const sections=Array.from({length:config.groups},(_,g)=>'<button type="button" data-group-matrix-section="group-'+g+'" class="'+(matrixSection==='group-'+g?'active':'')+'">Group '+groupLabel(g)+'</button>').join('');
- const knockoutTabs=Array.from({length:Math.max(1,Math.min(2,Number(config.knockouts)||1))},(_,i)=>'<button type="button" data-group-matrix-section="knockout-'+i+'" class="'+(matrixSection==='knockout-'+i?'active':'')+'">'+(config.knockouts===2?(i===0?'Top Knockout':'Bottom Knockout'):'Knockout')+'</button>').join('');
+ const knockoutTabs=Array.from({length:Math.max(1,Math.min(2,Number(config.knockouts)||1))},(_,i)=>'<button type="button" data-group-matrix-section="knockout-'+i+'" class="'+(matrixSection==='knockout-'+i?'active':'')+'">'+(config.knockouts===2?(i===0?'KO 1':'KO 2'):'Knockout')+'</button>').join('');
  const selected=String(matrixSection||'group-0');
  const tabs=hideTabs?'':'<nav class="scs-gt-matrix-tabs" aria-label="Matrix stages">'+sections+knockoutTabs+'</nav>';
  if(onlyGroup===null&&selected.startsWith('knockout-')){
@@ -540,7 +540,7 @@ function combinedGroupResults(){
  const top=eventStageTabs(resultsPage==='group'?'group':String(Number(matrixSection.split('-')[1])||0),false);
  if(resultsPage==='knockout'){
   const count=Math.max(1,Math.min(2,Number(config.knockouts)||1)),stage=String(matrixSection).startsWith('knockout-')?Math.max(0,Math.min(count-1,Number(String(matrixSection).slice(9))||0)):0;
-  const tabs=count===2?'<nav class="scs-gt-matrix-tabs" aria-label="Knockout stages">'+[0,1].map(i=>'<button type="button" data-results-knockout="'+i+'" class="'+(stage===i?'active':'')+'">'+(i===0?'Top Knockout':'Bottom Knockout')+'</button>').join('')+'</nav>':'';
+  const tabs=count===2?'<nav class="scs-gt-matrix-tabs" aria-label="Knockout stages">'+[0,1].map(i=>'<button type="button" data-results-knockout="'+i+'" class="'+(stage===i?'active':'')+'">'+(i===0?'KO 1':'KO 2')+'</button>').join('')+'</nav>':'';
   return top+'<section data-results-knockout-page>'+groupKnockoutPreview(stage)+'</section>';
  }
  const tabs='<label class="scs-results-group-selector"><span class="scs-results-selector-label">Select group</span><select data-results-group-select aria-label="Select group">'+Array.from({length:config.groups},(_,g)=>{const count=Array.from({length:config.per},(_,i)=>assignments[g+':'+i]).filter(pair=>Array.isArray(pair)&&pair.filter(Boolean).length===2).length;return '<option value="'+g+'" '+(g===resultsGroup?'selected':'')+'>Group '+groupLabel(g)+' · '+count+' teams</option>'}).join('')+'</select></label>';
