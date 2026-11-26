@@ -75,7 +75,7 @@ Storage.prototype.setItem=function(name,value){if(this!==localStorage||!managed(
 Storage.prototype.removeItem=function(name){if(this!==localStorage||!managed(String(name)))return storage.remove.call(this,name);const s=scope();if(s){legacy.delete(s.key+'|'+name);track(transaction(['legacy'],tx=>tx.objectStore('legacy').delete(s.key+'|'+name))).catch(()=>{});}try{storage.remove.call(this,name);}catch(_){} };
 async function read(table,query){const s=scope();if(!s)return raw.get(table,query);await ready(s);const queryClub=new URLSearchParams(query||'').get('club_id');if(queryClub&&queryClub!=='eq.'+s.clubId)return raw.get(table,query);let server=[],error;
  try{if(navigator.onLine===false)throw Error('Offline');server=await raw.get(table,query)||[];assertScope(s);await remember(s,table,server);}catch(e){error=e;}
- const map=new Map(server.map(r=>[r.id,r]));for(const r of records.values())if(r.scope===s.key&&r.table===table){if(r.deleted)map.delete(r.row.id);else if(r.pending||r.localError||error&&!map.has(r.row.id))map.set(r.row.id,clone(r.row));}
+ const map=new Map(server.map(r=>[r.id,r]));for(const r of records.values())if(r.scope===s.key&&r.table===table){if(r.deleted)map.delete(r.row.id);else if(r.pending||r.localError||(error||table==='tournaments')&&!map.has(r.row.id))map.set(r.row.id,clone(r.row));}
  const result=filterRows([...map.values()],query);const idFilter=new URLSearchParams(query||'').get('id'),known=idFilter?.startsWith('eq.')&&records.has(key(s,table,idFilter.slice(3)));if(error&&!result.length&&table==='sessions'&&!known&&!/__SCS_TOURNAMENT_COURT_CENTER__/.test(query||''))throw error;return result;
 }
 window.sbGet=async function(table,query){return validTables.has(table)?read(table,query):raw.get(table,query);};
