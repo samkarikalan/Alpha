@@ -179,6 +179,7 @@ function koEventCompleted(id){
 }
 function koMainStart(){koMain=koReadMain();if(!koMain){var legacy=null;try{legacy=JSON.parse(localStorage.getItem(LOCAL_TOURNAMENT_KEY)||'null')}catch(_){}koMain={id:koId(),title:legacy&&legacy.title||'Tournament',events:[],activeEventId:null};if(legacy&&legacy.matches&&legacy.matches.length){var id=koId();koMain.events.push({id:id,title:legacy.title||'Knockout Event',matches:legacy.matches.length,completed:Object.keys(legacy.results||{}).length,teams:(legacy.entries||[]).length});koMain.activeEventId=id;localStorage.setItem(koEventKey(id),JSON.stringify(legacy))}koSaveMain()}if(!Array.isArray(koMain.events))koMain.events=[];koActiveId=koMain.events.some(function(e){return e.id===koMain.activeEventId})?koMain.activeEventId:(koMain.events[0]&&koMain.events[0].id)||null;koMain.activeEventId=koActiveId;koSaveMain()}
 function koHomeRender(){
+ if(koMain?.events?.length&&!koMain.events.some(e=>e.id===koActiveId)){koActiveId=koMain.events.some(e=>e.id===koMain.activeEventId)?koMain.activeEventId:koMain.events[0].id;koMain.activeEventId=koActiveId;}
  if(!root)return;
  if(!root._scsHomeEventDelegate){root._scsHomeEventDelegate=true;root.addEventListener('click',function(event){const button=event.target.closest('[data-ko-open-event]');if(!button||!koHome)return;event.preventDefault();event.stopImmediatePropagation();koOpenHomeEvent(button.dataset.koOpenEvent);},true);}
  ++koRenderRevision; // Cancel deferred event layout work when returning to the parent dashboard.

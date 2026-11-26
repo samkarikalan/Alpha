@@ -64,7 +64,7 @@ api.navigation.bottom=function({active='home',attribute='data-team-nav',ariaLabe
  };
  if(active==='clubs'||active==='teams')active='event';
  const items=[['home','Home',icons.home],['event','Event',icons.event],['tournament','Draw & Results',icons.tournament],['match','Assign & Approve',icons.match]];
- return '<nav class="scs-tm-organized-tabs scs-tm-bottom-nav scs-gt-bottom-nav scs-team-bottom-nav scs-four-tab-nav" aria-label="'+esc(ariaLabel)+'">'+items.map(([key,label,icon])=>'<button type="button" '+esc(attribute)+'="'+key+'" class="'+(active===key?'active':'')+'"'+(active===key?' aria-current="page"':'')+'><span class="scs-tm-nav-icon" aria-hidden="true">'+icon+'</span><span class="scs-tm-nav-label">'+label+'</span></button>').join('')+'</nav>';
+ return '<nav class="scs-tm-organized-tabs scs-tm-bottom-nav scs-gt-bottom-nav scs-team-bottom-nav scs-four-tab-nav" aria-label="'+esc(ariaLabel)+'">'+items.map(([key,label,icon])=>'<button type="button" '+esc(attribute)+'="'+key+'" class="'+(active===key?'active':'')+'"'+(active===key?' aria-current="page"':'')+'><span class="scs-tm-nav-icon" aria-hidden="true">'+icon+'</span><span class="scs-tm-nav-label">'+label+(key==='event'&&eventName?'<small class="scs-active-event-name">'+esc(eventName)+'</small>':'')+'</span></button>').join('')+'</nav>';
 };
 api.events.overview=function({name='Event',parent='',format='',sport='',rules='',teams=[],matches=[],courts=null,status=''}={}){
  const done=matches.filter(m=>m.status==='approved'||m.status==='completed'||m.winner!=null&&m.approved===true).length,total=matches.length;
@@ -98,21 +98,36 @@ api.events.mountHome=function(root,options={}){
  queueMicrotask(()=>{api.events.styleCards(root,options);window.SCSTournamentCourts?.mount(root,options);});
  return root;
 };
+api.events.groupComplete=function(id,state){
+ if(!state?.started||!state.matches?.length||!state.matches.every(m=>m.status==='approved'))return false;
+ for(let i=0;i<Math.max(1,Math.min(2,Number(state.config?.knockouts)||1));i++){
+  let ko;try{ko=JSON.parse(localStorage.getItem('scs_group_knockout_'+id+'_'+i)||'null')}catch(_){return false}
+  const final=ko?.matches?.find(m=>m.final&&!m.third);
+  if(!ko||!final||!ko.results?.[final.id]?.winner)return false;
+ }
+ return true;
+};
 api.events.styleCards=function(root,options={}){
+ const eventState=event=>{try{return options.courtDashboard?.loadEventState?.(event)||JSON.parse(localStorage.getItem('scs_group_event_'+event.id)||'null')}catch(_){return null}};
+ const eventStatus=(event,fallback)=>{const state=eventState(event);return event.format==='group'||state?.assignments?(api.events.groupComplete(event.id,state)?'Completed':'In progress'):fallback};
+ const stageSummary=(card,event)=>{const state=eventState(event);if(!state?.assignments)return;const summary=document.createElement('p');summary.className='scs-event-stage-progress';const groupDone=state.matches?.length&&state.matches.every(m=>m.status==='approved'),parts=['Group: '+(groupDone?'Complete':'In progress')];for(let i=0;i<Math.max(1,Math.min(2,Number(state.config?.knockouts)||1));i++){let ko;try{ko=JSON.parse(localStorage.getItem('scs_group_knockout_'+event.id+'_'+i)||'null')}catch(_){}const final=ko?.matches?.find(m=>m.final&&!m.third);parts.push('KO '+(i+1)+': '+(final&&ko.results?.[final.id]?.winner?'Complete':ko?.live?'In progress':'Not started'));}summary.textContent=parts.join(' · ');card.querySelector('.scs-event-card-meta')?.after(summary);};
+ const markActive=(card,event)=>{if(String(event.id)!==String(options.activeEventId))return;card.classList.add('is-active');card.setAttribute('aria-label','Active event: '+(event.title||'Event'));const marker=document.createElement('span');marker.className='scs-active-event-marker';marker.textContent='✓ Active event';card.querySelector('h3')?.appendChild(marker);};
  const header=(status,format)=>'<div class="scs-event-card-top"><span>▦ '+esc(format==='group'?'Group Stage + Knockout':format==='knockout'?'Knockout':'Event')+'</span><span class="scs-event-card-status '+(status==='Completed'?'is-completed':'')+'">'+esc(status)+'</span></div>';
  root.querySelectorAll('.scs-ko-home-event').forEach(card=>{
   if(card.classList.contains('scs-event-card'))return;
-  const summary=card.querySelector('.scs-ko-home-event-summary'),name=summary?.querySelector('strong')?.textContent||'Event',meta=summary?.querySelector('small')?.textContent||'',status=card.querySelector('.scs-ko-home-status')?.textContent||'Live';
+  const summary=card.querySelector('.scs-ko-home-event-summary'),name=summary?.querySelector('strong')?.textContent||'Event',meta=summary?.querySelector('small')?.textContent||'',event=options.events?.find(e=>String(e.id)===String(card.querySelector('[data-ko-open-event]')?.dataset.koOpenEvent))||{},status=eventStatus(event,card.querySelector('.scs-ko-home-status')?.textContent||'Live');
   card.classList.add('scs-event-card');summary?.remove();
   card.insertAdjacentHTML('afterbegin',header(status,card.dataset.cardFormat)+'<h3>'+esc(name)+'</h3><p class="scs-event-card-meta">'+esc(meta)+'</p>');
+  markActive(card,event);stageSummary(card,event);
   const actions=card.querySelector('.scs-ko-home-card-actions'),open=actions?.querySelector('.scs-ko-event-open'),del=actions?.querySelector('.scs-ko-delete-event');
   if(open){open.classList.add('scs-event-card-open');open.innerHTML=(status==='Completed'?'View results':'Open event')+'<span aria-hidden="true">➜</span>'}
   if(del&&!options.viewOnly){const menu=document.createElement('details');menu.className='scs-event-card-menu';menu.innerHTML='<summary aria-label="Actions for '+esc(name)+'">⋯</summary><div class="scs-event-card-menu-panel"></div>';menu.querySelector('div').appendChild(del);card.querySelector('.scs-event-card-top').appendChild(menu);menu.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.open=false;menu.querySelector('summary').focus()}})}else del?.remove();
  });
  root.querySelectorAll('button[data-open-event]').forEach(button=>{
-  const event=options.events?.find(e=>String(e.id)===button.dataset.openEvent)||{},meta=button.querySelector('small')?.textContent||'',status=event.status==='completed'||(Number(event.matches)>0&&Number(event.completed)>=Number(event.matches))?'Completed':'Live';
+  const event=options.events?.find(e=>String(e.id)===button.dataset.openEvent)||{},meta=button.querySelector('small')?.textContent||'',status=eventStatus(event,event.status==='completed'||(Number(event.matches)>0&&Number(event.completed)>=Number(event.matches))?'Completed':'Live');
   button.classList.add('scs-event-card','scs-event-card-button');
   button.innerHTML=header(status,event.format)+'<h3>'+esc(event.title||'Event')+'</h3><p class="scs-event-card-meta">'+esc(meta)+'</p><span class="scs-event-card-open">'+(status==='Completed'?'View results':'Open event')+'<span aria-hidden="true">➜</span></span>';
+  markActive(button,event);stageSummary(button,event);
  });
 };
 api.events.leaveHome=function(root){root?.classList.remove('scs-api-home-host')};
