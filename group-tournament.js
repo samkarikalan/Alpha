@@ -29,7 +29,8 @@ function groupHomeRender(){if(mixedContext){save();const home=mixedContext.onHom
 function groupKnockoutReady(data){const ms=Array.isArray(data.matches)?data.matches:[];return !!data.started&&ms.length>0&&ms.every(m=>m.status==='approved')}
 function qualifierPayload(data,stage){return {config:data.config,matches:data.matches,assignments:data.assignments,selectedPlayerDetails:data.selectedPlayerDetails,stage};}
 function groupKnockoutCandidates(data,stage){return SCSTournamentEngine.ensure('group-qualifiers',qualifierPayload(data,stage),refreshGroupComputedView)?.teams||[];}
-async function groupKnockoutOpen(stage){if(viewOnly){const saved=JSON.parse(localStorage.getItem('scs_group_knockout_'+groupEventId+'_'+stage)||'null');if(saved&&window.SCSTournament)SCSTournament.open(saved,true);else alert('No published knockout bracket is available.');return}
+async function groupKnockoutOpen(stage,section){const load=()=>groupKnockoutOpenData(stage,section);return !localStorage.getItem('scs_group_knockout_'+groupEventId+'_'+stage)&&window.ScsApi?.loading?ScsApi.loading.run(el(),load):load();}
+async function groupKnockoutOpenData(stage,section){if(viewOnly){const saved=JSON.parse(localStorage.getItem('scs_group_knockout_'+groupEventId+'_'+stage)||'null');if(saved&&window.SCSTournament)SCSTournament.open(saved,true);else alert('No published knockout bracket is available.');return}
  const id=groupEventId,data=JSON.parse(localStorage.getItem(groupEventKey(id))||'{}');
  if(!groupKnockoutReady(data)){alert('Complete and approve every group match first.');return}
  const key='scs_group_knockout_'+id+'_'+stage;
@@ -53,7 +54,7 @@ async function groupKnockoutOpen(stage){if(viewOnly){const saved=JSON.parse(loca
  // Upgrade V413/V414 saved group brackets without overwriting match progress.
  if(saved&&!saved.live&&!saved.livePage){saved.livePage=true;saved.assistFinalized=true;saved.assistAssignmentsConfirmed=true;saved.knockoutFixturesGenerated=true;localStorage.setItem(key,JSON.stringify(saved));}
  if(!window.SCSTournament||typeof window.SCSTournament.open!=='function'){alert('Knockout module is unavailable.');return}
- try{window.SCSTournament.open(saved,false,function(updated){localStorage.setItem(key,JSON.stringify(updated));return Promise.resolve(updated)});if(saved.live&&typeof window.SCSTournament.resumeGroupCourtSession==='function')await window.SCSTournament.resumeGroupCourtSession();return true;}
+ try{window.SCSTournament.open(saved,false,function(updated){localStorage.setItem(key,JSON.stringify(updated));return Promise.resolve(updated)});if(section)window.SCSTournament.switchTournamentTab(section);if(saved.live&&typeof window.SCSTournament.resumeGroupCourtSession==='function')await window.SCSTournament.resumeGroupCourtSession();return true;}
  catch(error){console.error('Group knockout launch failed',error);alert('Could not open Knockout. '+(error&&error.message||'Please retry.'));}
 }
 function groupKnockoutPreview(stage){
@@ -406,7 +407,7 @@ async function openEventStage(stage,mode){
  if(stage==='group'){resultsPage='group';tab='main';groupHome=false;if(el())el().hidden=false;render();return;}
  matrixSection='knockout-'+Number(stage);resultsPage='knockout';
  if(!groupKnockoutReady({started,matches})){tab='main';render();return;}
- const opened=await groupKnockoutOpen(Number(stage));
+ const opened=await groupKnockoutOpen(Number(stage),mode==='match'?'match':'flowchart');
  if(!opened)return false;
  if(mode==='match'){await new Promise(resolve=>requestAnimationFrame(resolve));await window.SCSEventCourtPool?.whenReady(document.getElementById('scsTournamentOverlay'));window.SCSTournament?.switchTournamentTab('match');await new Promise(resolve=>requestAnimationFrame(resolve));}
  return true;
