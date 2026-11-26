@@ -91,9 +91,7 @@ function panel(o){
   const section=(title,body,n)=>'<section class="scs-event-match-section"><h3>'+title+' · '+n+'</h3>'+(body||'<p class="scs-tm-live-empty">No matches in this category.</p>')+'</section>';
   return '<section class="scs-tm-live-center"><div class="scs-tm-live-center-head"><h3>Assign &amp; Approve</h3><div class="scs-tm-court-picker scs-tm-live-count">'+btn('−',attrs.change(-1))+'<b>'+count+'</b>'+btn('+',attrs.change(1))+'</div></div>'+chooser+
    section('Under approval',approval.map(court).join('')+remainingReview.map(completed).join(''),approval.length+remainingReview.length)+
-   section('In progress / Assigned',active.map(court).join(''),active.length)+
-   section('Ready / Not ready',waitingContent(visibleWait,o.orderedWaiting),visibleWait.length)+
-   section('Finished',done.map(completed).join(''),done.length)+'</section>';
+   section('To be assigned',waitingContent(visibleWait,o.orderedWaiting),visibleWait.length)+'</section>';
  }
  const shell='<section class="scs-tm-live-center"><div class="scs-tm-live-center-head"><div><small>LIVE TOURNAMENT</small><h3>Courts &amp; Match Assignment</h3></div><div class="scs-tm-court-picker scs-tm-live-count">'+btn('−',attrs.change(-1))+'<b>'+count+'</b>'+btn('+',attrs.change(1))+'</div></div><div class="scs-tm-live-courts">'+numbers.map(n=>{const c=items.find(x=>x.number===n);return court(c||{number:n})}).join('')+'</div>'+chooser;
  if(o.upcomingOnly)return shell+'<details class="scs-tm-upcoming" open><summary><span>Upcoming</span><b>'+wait.length+'</b></summary><div class="scs-tm-upcoming-content">'+(waitingContent(wait,o.orderedWaiting)||'<div class="scs-tm-live-empty">No upcoming matches.</div>')+'</div></details></section>';
