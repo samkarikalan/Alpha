@@ -1223,6 +1223,9 @@ function organizeTournamentTabs(){
  var tournamentPanel=panel('flowchart',[workspace,hint,details,fixtureList]);
  panel('match',match?[match]:[function(){var empty=document.createElement('section');empty.className='scs-tm-pool';empty.innerHTML='<h3>Assign &amp; Approve</h3><p>Start the knockout tournament to assign courts and conduct matches.</p>';
 return empty}()]);
+ if(groupChildMode&&window.SCSGroupTournament?.stageTabs){
+  ['flowchart','match'].forEach(function(page){var target=root.querySelector('[data-tm-panel="'+page+'"]');if(!target)return;var holder=document.createElement('div');holder.innerHTML=SCSGroupTournament.stageTabs(String(draw._scsGroupKnockoutStage),page==='match');var navigation=holder.firstElementChild;target.prepend(navigation);navigation.querySelectorAll('[data-event-stage]').forEach(function(button){button.onclick=function(){var stage=button.dataset.eventStage,mode=button.dataset.eventStageMode;if(String(stage)===String(draw._scsGroupKnockoutStage))return;close();SCSGroupTournament.openEventStage(stage,mode);};});});
+ }
  // Spectators reuse the live Match Center markup but cannot operate any court or match.
  if(readonly&&live){var viewPanel=root.querySelector('[data-tm-panel="match"]');if(viewPanel){viewPanel.querySelectorAll('button').forEach(function(btn){if(!btn.closest('.scs-tm-live-tabs'))btn.remove()});viewPanel.querySelectorAll('[onclick]').forEach(function(node){var call=node.getAttribute('onclick')||'';if(!/^SCSTournament\.liveTab\(/.test(call))node.removeAttribute('onclick')});}}
  if(!tabs.some(function(t){return t[0]===tournamentActiveTab}))tournamentActiveTab=groupChildMode?'flowchart':'main';
