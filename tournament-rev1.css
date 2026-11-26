@@ -58,3 +58,9 @@
 .scs-active-event-name{display:block;font-size:11px;line-height:1.2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit}
 
 .scs-event-stage-progress{font-size:13px;line-height:1.6;color:var(--muted,#b8c6d9);margin:8px 0 14px}
+
+/* Cover only the scrolling workspace; keep the header and navigation in place. */
+.scs-page-loading::before{content:"";position:fixed;top:var(--scs-workspace-top,120px);bottom:var(--scs-workspace-bottom,0px);left:0;right:0;background:var(--bg,#071b32);z-index:2147483300;pointer-events:auto}
+.scs-page-loading::after{content:"";position:fixed;left:calc(50% - 20px);top:calc(var(--scs-workspace-top,120px) + (100dvh - var(--scs-workspace-top,120px) - var(--scs-workspace-bottom,0px))/2 - 20px);width:40px;height:40px;box-sizing:border-box;border:4px solid #385571;border-top-color:var(--sport-accent,#51d3cf);border-radius:50%;animation:scs-page-spin .8s linear infinite;z-index:2147483301;pointer-events:none}
+@keyframes scs-page-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.scs-page-loading::after{animation-duration:2s}}

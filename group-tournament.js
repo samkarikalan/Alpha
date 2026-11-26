@@ -412,12 +412,12 @@ async function openEventStage(stage,mode){
  return true;
 }
 async function refreshEventAssignments(){
- if(eventAssignmentRefreshing)return;eventAssignmentRefreshing=true;
+ if(eventAssignmentRefreshing)return;eventAssignmentRefreshing=true;const before=JSON.stringify(eventAssignmentSessions);
  const event=groupEventId,club=typeof getMyClub==='function'?getMyClub()?.id:null;
  try{if(club&&typeof sbGet==='function'){const rows=await sbGet('sessions','club_id=eq.'+club+'&status=in.(live,completed)&started_by=eq.__SCS_TOURNAMENT_COURT_CENTER__&order=updated_at.desc&select=id,status,club_id,started_by,rounds_data,updated_at');if(groupEventId!==event)return;eventAssignmentSessions=rows||[];}}
  catch(error){console.warn('Event assignment refresh:',error);}
  finally{eventAssignmentRefreshing=false;}
- if(el()&&!groupHome&&tab==='match'&&eventAssignmentStage==='all')render();
+ if(JSON.stringify(eventAssignmentSessions)!==before&&el()&&!groupHome&&tab==='match'&&eventAssignmentStage==='all'){if(window.ScsApi?.loading)ScsApi.loading.preserve(el(),render);else render();}
 }
 setInterval(()=>{if(!document.hidden&&el()&&!el().hidden&&!groupHome&&tab==='match'&&eventAssignmentStage==='all')refreshEventAssignments();},8000);
 function allEventAssignments(){

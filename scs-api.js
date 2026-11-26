@@ -98,6 +98,20 @@ api.events.mountHome=function(root,options={}){
  queueMicrotask(()=>{api.events.styleCards(root,options);window.SCSTournamentCourts?.mount(root,options);});
  return root;
 };
+// Navigation keeps the new workspace covered until its data reads and render callbacks settle.
+(function(){
+ const selector='#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay,#scsTournamentContinue,#scsTournamentManager',visible=new WeakMap(),loading=new Set();
+ let pending=0,timer=null,generation=0;
+ const show=root=>{if(!root||root.hidden)return;loading.add(root);root.classList.add('scs-page-loading');root.setAttribute('aria-busy','true');settle();};
+ function settle(){const revision=++generation;clearTimeout(timer);if(pending)return;timer=setTimeout(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{if(pending||revision!==generation)return;for(const root of loading){root.classList.remove('scs-page-loading');root.removeAttribute('aria-busy');}loading.clear();})),140);}
+ const original=window.fetch;
+ if(original)window.fetch=function(...args){pending++;clearTimeout(timer);let result;try{result=original.apply(this,args);}catch(error){pending--;settle();throw error;}Promise.resolve(result).then(response=>{try{return response.clone().arrayBuffer();}catch(_){return null;}}).catch(()=>{}).finally(()=>{pending--;settle();});return result;};
+ document.addEventListener('click',event=>{const button=event.target.closest('button,a');if(!button||button.disabled)return;const root=button.closest(selector);if(!root)return;if(button.matches('[data-group-nav],[data-ko-nav],[data-tm-nav],[data-team-nav],[data-rev1-open],[data-open-event],[data-ko-open-event],[data-event-stage],[data-results-page],[data-results-group-select],[data-results-knockout],[data-rev1-back],.scs-rev1-back,[role="tab"],[data-tournament-score-refresh],[data-event-assignment-refresh],[data-courts-refresh],[data-assign-refresh]'))show(root);},true);
+ function scan(){document.querySelectorAll(selector).forEach(root=>{const now=!root.hidden&&getComputedStyle(root).display!=='none';if(now&&!visible.get(root))show(root);visible.set(root,now);});}
+ function init(){scan();new MutationObserver(scan).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','style']});}
+ api.loading={begin:show,preserve(root,render){const selectors=['[data-scs-workspace-content]','.scs-gt-sheet','.scs-team-sheet'];const positions=selectors.map(selector=>({selector,top:root?.querySelector(selector)?.scrollTop||0}));const result=render();requestAnimationFrame(()=>{if(!root?.isConnected)return;for(const item of positions){const pane=root.querySelector(item.selector);if(pane)pane.scrollTop=item.top;}});return result;}};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
 api.events.groupComplete=function(id,state){
  if(!state?.started||!state.matches?.length||!state.matches.every(m=>m.status==='approved'))return false;
  for(let i=0;i<Math.max(1,Math.min(2,Number(state.config?.knockouts)||1));i++){
