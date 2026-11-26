@@ -1189,7 +1189,7 @@ function organizeTournamentTabs(){
     root.classList.add('scs-ko-bottom-nav-page');
     var key=btn.getAttribute('data-tm-nav');
     if(['tournament','match'].includes(key)&&knockoutEventSetupIssues().length){switchTournamentTab('main');return;}
-    if(key==='home'){koShowHome();return}
+    if(key==='home'){if(groupChildMode){close();window.SCSGroupTournament?.showTournamentHome();}else koShowHome();return}
     if(key==='event'){switchTournamentTab('main');return}
     var found=tabs.find(function(t){return t[1]===key});
     if(found&&key==='tournament'&&draw&&Array.isArray(draw.matches)&&draw.matches.length){
@@ -1202,7 +1202,7 @@ function organizeTournamentTabs(){
     if(found)switchTournamentTab(found[0]);
    };
   });
-  if(groupChildMode)bar.querySelectorAll('[data-tm-nav]').forEach(function(btn){if(!tabs.some(function(t){return t[1]===btn.getAttribute('data-tm-nav')}))btn.remove()});
+  if(groupChildMode)bar.querySelectorAll('[data-tm-nav]').forEach(function(btn){if(btn.getAttribute('data-tm-nav')!=='home'&&!tabs.some(function(t){return t[1]===btn.getAttribute('data-tm-nav')}))btn.remove()});
  }else{
   bar=document.createElement('nav');bar.className='scs-tm-organized-tabs scs-tm-bottom-nav';bar.setAttribute('aria-label','Tournament sections');
    (groupChildMode?[['flowchart','Bracket'],['match','Match Center']]:[['main','Home'],['players','Teams'],['flowchart','Tournament'],['match','Match Center']]).forEach(function(item){var btn=document.createElement('button');btn.type='button';btn.textContent=item[1];btn.setAttribute('data-tm-tab',item[0]);btn.onclick=function(){switchTournamentTab(item[0])};bar.appendChild(btn)});
