@@ -128,6 +128,7 @@ async function openPicker(){
   try{
     try{clubPlayers=normalizePlayers(typeof dbGetPlayers==='function'&&(window.SCSSportContext?.appModule!=='scoreboard'||getMyClub()?.id)?await dbGetPlayers(false):[]);}catch(_){clubPlayers=[];}
     var sessions=typeof dbGetLiveSessions==='function'?await dbGetLiveSessions({strict:true}):[];
+    var pickerLocalTournament=null;if(window.SCSCourtCenter?.tournamentSessionViews){var storedLocal=SCSCourtCenter.localSession?.(),sourceCount=sessions.length,views=SCSCourtCenter.tournamentSessionViews(storedLocal?sessions.concat([storedLocal]):sessions);sessions=views.slice(0,sourceCount);pickerLocalTournament=storedLocal?views[sourceCount]:null;}
     var matches=[];
     (sessions||[]).forEach(function(sess){var rounds=sess.rounds_data||[];if(!rounds.length)return;var round=rounds[rounds.length-1];(round.games||[]).forEach(function(g,gi){
       var winnerOn = g.winnerEnabled===true || round.winnerEnabled===true;
@@ -135,7 +136,7 @@ async function openPicker(){
       if(available) matches.push({sessionId:sess.id,round:round.round,court:g.court||gi+1,pair1:g.pair1||[],pair2:g.pair2||[],game:g,sport:g.sport||round.sport||(round.tournament&&round.tournament.sport)||sess.sport,courtCenter:round.courtCenter===true,tournament:tournament,passwordRef:round.tournament?{tournamentId:round.tournament._scsCloudTournamentId,matchKey:String(g.tournament_match)}:null,scoringRules:round.tournament&&round.tournament.scoringRules,matchNo:tournamentMatchLabel(round.tournament,g),scoreReady:g.score_status==='scored'});
     });});
     /* Tournament matches are locally persisted and need no Supabase session. */
-    if(window.SCSCourtCenter&&SCSCourtCenter.localSession){var ls=SCSCourtCenter.localSession();if(ls&&ls.rounds_data&&ls.rounds_data[0]){(ls.rounds_data[0].games||[]).forEach(function(g){if(g.court&&g.court_center_status!=='approved'&&!g.conduct_finished&&((conductMode&&g.score_status==='scored')||(g.score_status!=='scored'&&!g.winner))){matches.push({sessionId:ls.id,round:1,court:g.court,pair1:g.pair1||[],pair2:g.pair2||[],game:g,scoringRules:ls.rounds_data[0].tournament&&ls.rounds_data[0].tournament.scoringRules,courtCenter:true,tournament:true,matchNo:tournamentMatchLabel(ls.rounds_data[0].tournament,g),scoreReady:g.score_status==='scored'})}})}}
+    if(window.SCSCourtCenter&&SCSCourtCenter.localSession){var ls=window.SCSCourtCenter?.tournamentSessionViews?pickerLocalTournament:SCSCourtCenter.localSession();if(ls&&ls.rounds_data&&ls.rounds_data[0]){(ls.rounds_data[0].games||[]).forEach(function(g){if(g.court&&g.court_center_status!=='approved'&&!g.conduct_finished&&((conductMode&&g.score_status==='scored')||(g.score_status!=='scored'&&!g.winner))){matches.push({sessionId:ls.id,round:1,court:g.court,pair1:g.pair1||[],pair2:g.pair2||[],game:g,scoringRules:ls.rounds_data[0].tournament&&ls.rounds_data[0].tournament.scoringRules,courtCenter:true,tournament:true,matchNo:tournamentMatchLabel(ls.rounds_data[0].tournament,g),scoreReady:g.score_status==='scored'})}})}}
     /* Team Tournament uses the same scorer and Conduct a Match picker as Group. */
     if(window.SCSTeamTournament&&typeof SCSTeamTournament.conductMatches==='function'){
       SCSTeamTournament.conductMatches().forEach(function(tm){
