@@ -22,3 +22,16 @@
 :is(#scsGroupTournament,#scsTournamentOverlay) .scs-event-stage-tabs{display:grid!important;grid-template-columns:repeat(var(--stage-count,3),minmax(0,1fr))!important;gap:0;margin:8px 0 16px;border-bottom:1px solid var(--border,#39516f)}
 :is(#scsGroupTournament,#scsTournamentOverlay) .scs-event-stage-tabs>button{min-width:0;min-height:48px;padding:10px 5px!important;border:0!important;border-bottom:3px solid transparent!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--muted,#b8c6d9);font:inherit;font-size:14px;font-weight:700;white-space:normal;overflow-wrap:anywhere}
 :is(#scsGroupTournament,#scsTournamentOverlay) .scs-event-stage-tabs>button.active{border-bottom-color:var(--sport-accent,#35d1dc)!important;color:var(--sport-accent,#67e5eb)!important}
+
+/* The stage tabs replace the legacy group return button. */
+#scsTournamentOverlay .scs-tm-group-back{display:none!important}
+#scsTournamentOverlay .scs-event-setup-prompt{padding:18px;margin-bottom:20px;border:1px solid var(--border,#52728e);border-radius:16px;background:var(--surface2,#112e4b)}
+#scsTournamentOverlay .scs-event-setup-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#scsTournamentOverlay .scs-event-setup-heading>div{flex:1;min-width:130px}
+#scsTournamentOverlay .scs-event-setup-heading small{font-size:10px;letter-spacing:.1em;color:var(--muted,#b8c6d9)}
+#scsTournamentOverlay .scs-event-setup-heading h3{margin:4px 0;font-size:21px}
+#scsTournamentOverlay .scs-event-setup-icon{display:grid;place-items:center;width:42px;height:42px;border:1px solid var(--border,#52728e);border-radius:12px;font-size:24px;color:var(--sport-accent,#67e5eb)}
+#scsTournamentOverlay .scs-event-setup-badge{padding:5px 9px;border:1px solid #d6ad47;border-radius:20px;color:#f2cd79;font-size:12px;white-space:nowrap}
+#scsTournamentOverlay .scs-event-setup-prompt p{margin:14px 0 18px;line-height:1.55;color:var(--muted,#b8c6d9)}
+#scsTournamentOverlay .scs-event-setup-action{display:flex!important;justify-content:space-between;align-items:center;width:100%;min-height:48px;padding:12px 16px!important;border:1px solid #638fc4!important;border-radius:10px!important;background:#285b92!important;color:#fff!important;font:inherit;font-weight:700;cursor:pointer}
+#scsTournamentOverlay .scs-event-setup-action:focus-visible{outline:3px solid var(--sport-accent,#67e5eb);outline-offset:3px}
