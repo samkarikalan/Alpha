@@ -1,7 +1,9 @@
 /* V924: one codebase, separate sport PWA identities and device workspaces. Load first. */
 (function(){
  'use strict';
- const match=location.pathname.match(/^\/(badminton|pickleball|tournaments|scoreboard)(?:\/|$)/);
+ const basePath=new URL('./',document.baseURI).pathname;
+ const modulePath=location.pathname.startsWith(basePath)?location.pathname.slice(basePath.length):'';
+ const match=modulePath.match(/^(badminton|pickleball|tournaments|scoreboard)(?:\/|$)/);
  const appModule=match?match[1]:'shared';
  const sport=appModule==='badminton'||appModule==='pickleball'?appModule:null;
  document.documentElement.dataset.scsApp=appModule;

@@ -1,15 +1,17 @@
 // SCS_BUILD_50_MYHUB_EMBEDDED_CLUBS_REPORT
 /* Sports Club Scheduler service worker — complete installed-app updates. */
-const CACHE_NAME = 'scs-cache-V965-R3';
+const APP_BASE = new URL('./', self.location.href);
+const CACHE_PREFIX = 'scs-repo-cache-' + encodeURIComponent(APP_BASE.pathname) + '-';
+const CACHE_NAME = CACHE_PREFIX + 'paths-1';
 const APP_SHELL = './index.html?v=V965-R3';
 
 const ASSETS = [
   './tournament-local.js?v=V965-R3',
   './workspace-bounds.js?v=V965-R3', './tournament-score-sync.js?v=V965-R3', './tournament-courts.js?v=V965-R3', './event-court-pool.js?v=V965-R3',
   './sport-context.js?v=V939', './single-login.js?v=V939', './scoreboard-app.js?v=V965-R3', './sport-pwa.js?v=V939', './slot-options.js?v=V939',
-  '/badminton/index.html?v=V965-R3', '/pickleball/index.html?v=V965-R3', '/scoreboard/index.html?v=V965-R3', '/tournaments/index.html?v=V965-R3',
-  '/badminton/manifest.json?v=V939', '/pickleball/manifest.json?v=V939', '/scoreboard/manifest.json?v=V965-R3', '/tournaments/manifest.json?v=V965-R3',
-  ...['badminton','pickleball','scoreboard','tournaments'].flatMap(sport=>['180','192','512','maskable-512'].map(size=>'/'+sport+'/icon-'+size+'.png?v='+(sport==='scoreboard'||sport==='tournaments'?'V965-R3':'V939'))),
+  './badminton/index.html?v=V965-R3', './pickleball/index.html?v=V965-R3', './scoreboard/index.html?v=V965-R3', './tournaments/index.html?v=V965-R3',
+  './badminton/manifest.json?v=V939', './pickleball/manifest.json?v=V939', './scoreboard/manifest.json?v=V965-R3', './tournaments/manifest.json?v=V965-R3',
+  ...['badminton','pickleball','scoreboard','tournaments'].flatMap(sport=>['180','192','512','maskable-512'].map(size=>'./'+sport+'/icon-'+size+'.png?v='+(sport==='scoreboard'||sport==='tournaments'?'V965-R3':'V939'))),
   './club-sport.js?v=V939',
   './app.css?v=V965-R3', './round-storage.js?v=V919',
   './scs-icon-180.png?v=V921', './scs-icon-192.png?v=V921', './scs-icon-512.png?v=V921', './scs-icon-maskable-512.png?v=V921',
@@ -56,13 +58,13 @@ self.addEventListener('message', function(event) {
 self.addEventListener('activate', function(event) {
   event.waitUntil(
     caches.keys().then(function(keys) {
-      return Promise.all(keys.filter(function(key) { return /^scs-cache-/.test(key) && key !== CACHE_NAME; })
+      return Promise.all(keys.filter(function(key) { return (key.startsWith(CACHE_PREFIX) || (APP_BASE.pathname==='/' && /^scs-cache-/.test(key))) && key !== CACHE_NAME; })
         .map(function(key) { return caches.delete(key); }));
     }).then(function() { return self.clients.claim(); })
   );
 });
 
-function sportShell(address){const match=new URL(address).pathname.match(/^\/(badminton|pickleball|scoreboard|tournaments)(?:\/|$)/);return match?'/'+match[1]+'/index.html?v=V965-R3':APP_SHELL;}
+function sportShell(address){const path=new URL(address).pathname;if(!path.startsWith(APP_BASE.pathname))return APP_SHELL;const match=path.slice(APP_BASE.pathname.length).match(/^(badminton|pickleball|scoreboard|tournaments)(?:\/|$)/);return match?'./'+match[1]+'/index.html?v=V965-R3':APP_SHELL;}
 
 function isApiRequest(url) {
   return url.includes('supabase.co') || url.includes('workers.dev') ||
@@ -71,7 +73,8 @@ function isApiRequest(url) {
 }
 
 self.addEventListener('fetch', function(event) {
-  if (event.request.method !== 'GET' || isApiRequest(event.request.url)) return;
+  const address=new URL(event.request.url);
+  if (event.request.method !== 'GET' || address.origin!==APP_BASE.origin || !address.pathname.startsWith(APP_BASE.pathname) || isApiRequest(event.request.url)) return;
   const isNavigation = event.request.mode === 'navigate';
 
   event.respondWith((async function() {
@@ -83,9 +86,9 @@ self.addEventListener('fetch', function(event) {
       }
       return response;
     } catch (error) {
-      if (isNavigation) return (await caches.match(sportShell(event.request.url))) || Response.error();
-      return (await caches.match(event.request)) ||
-        (await caches.match(event.request, { ignoreSearch: true })) ||
+      if (isNavigation) return (await (await caches.open(CACHE_NAME)).match(sportShell(event.request.url))) || Response.error();
+      return (await (await caches.open(CACHE_NAME)).match(event.request)) ||
+        (await (await caches.open(CACHE_NAME)).match(event.request, { ignoreSearch: true })) ||
         Response.error();
     }
   })());

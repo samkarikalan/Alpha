@@ -2,7 +2,8 @@
 <!-- CLUBS v1.7.4 -->
 <html lang="en">
 <head>
-  <script src="/sport-context.js?v=V939"></script>
+  <base href="./">
+  <script src="sport-context.js?v=V939"></script>
   <script>
     // Build 839: one-time recovery for installed PWAs that still hold an older SCS app shell.
     (function () {
@@ -82,8 +83,8 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <link rel="apple-touch-icon" sizes="180x180" href="/scs-icon-180.png?v=V921">
-  <link rel="manifest" href="/manifest.json?v=V921">
+  <link rel="apple-touch-icon" sizes="180x180" href="scs-icon-180.png?v=V921">
+  <link rel="manifest" href="manifest.json?v=V921">
   <meta name="theme-color" content="#0f0f13" id="metaThemeColor">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -3718,7 +3719,7 @@ function scsStartKnockoutTournament(){
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js?v=V965-R3', { scope: '/', updateViaCache: 'none' })
+        navigator.serviceWorker.register(new URL('sw.js?v=repo-paths-1', document.baseURI).href, { scope: new URL('./', document.baseURI).pathname, updateViaCache: 'none' })
           .then(function(reg) {
             console.log('SW registered - CLUBS v' + (window.SCS_APP_VERSION || '1.6.4'));
             // Check once on a clean app load. Do not trigger update checks when
