@@ -9,6 +9,7 @@
  function watch(el){if(el&&resize&&!observed.has(el)){observed.add(el);resize.observe(el);}}
  function set(el,key,value){const next=Math.round(value)+'px';if(el.style.getPropertyValue(key)!==next)el.style.setProperty(key,next);}
  function refresh(){
+  window.ScsApi?.eventIdentity?.refreshHeader();
   if(frame){cancelAnimationFrame(frame);frame=0;}const viewport=window.visualViewport;
   const screenBottom=Math.min(innerHeight,viewport?viewport.offsetTop+viewport.height:innerHeight);
   let top=viewport?.offsetTop||0;

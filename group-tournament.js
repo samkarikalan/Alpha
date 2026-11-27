@@ -8,7 +8,8 @@ function groupPageTitle(label){
  const root=el();if(!root)return;root.dataset.pageTitle=label;if(label==='Tournament'&&root._scsEventCourtPool)root._scsEventCourtPool.active=false;root.dataset.groupHome=String(groupHome);root.dataset.readOnly=String(viewOnly);
  const old=root.querySelector('.scs-group-fallback-header');if(old)old.remove();
  if(!document.getElementById('scsTournamentPersistentHeader'))root.insertAdjacentHTML('afterbegin','<header class="scs-group-fallback-header"><button type="button" aria-label="Open tournament menu" onclick="if(window.scsTournamentMenuToggle)scsTournamentMenuToggle(true)">☰</button><h2>'+escapeHTML(label)+'</h2></header>');
- if(typeof window.scsRefreshTournamentHeader==='function')window.scsRefreshTournamentHeader();
+ if(!groupHome&&groupEventId)window.ScsApi?.eventIdentity?.apply(root,groupMain,groupEventId,title);else window.ScsApi?.eventIdentity?.clear(root);
+ if(typeof window.scsRefreshTournamentHeader==='function')window.scsRefreshTournamentHeader();window.ScsApi?.eventIdentity?.refreshHeader();
 }
 function groupId(){return 'gr-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)}
 function groupMainSave(){
@@ -401,7 +402,7 @@ let eventAssignmentStage='group',eventAssignmentSessions=[],eventAssignmentCards
 const eventStageScopes=new Map();
 function setStageScope(stage,id=groupEventId){if(stage===null){eventStageScopes.delete(String(id));return;}eventStageScopes.set(String(id),String(stage));eventAssignmentStage=stage==='group'?'group':String(stage);}
 function eventStageTabs(selected,assignment){
- const scope=eventStageScopes.get(String(groupEventId));if(scope!==undefined)return '<div class="scs-stage-context"><strong>'+escapeHTML(title)+' · '+(scope==='group'?'Group':'KO '+(Number(scope)+1))+'</strong><button type="button" data-event-stage="choose" data-event-stage-mode="'+(assignment?'match':'draw')+'">Change stage</button></div>';
+ const scope=eventStageScopes.get(String(groupEventId));if(scope!==undefined||Number(config.knockouts)>1)return '';
  const choices=assignment?[['all','All'],['group','Group']]:[['group','Group']];
  for(let i=0;i<Math.max(1,Math.min(2,Number(config.knockouts)||1));i++)choices.push([String(i),Number(config.knockouts)===2?(i===0?'KO 1':'KO 2'):'Knockout']);
  return '<nav class="scs-results-pages scs-event-stage-tabs" style="--stage-count:'+choices.length+'" aria-label="'+(assignment?'Assignment stages':'Draw and results stages')+'">'+choices.map(([key,label])=>'<button type="button" data-event-stage="'+key+'" data-event-stage-mode="'+(assignment?'match':'draw')+'" aria-pressed="'+(String(selected)===key)+'" class="'+(String(selected)===key?'active':'')+'">'+label+'</button>').join('')+'</nav>';

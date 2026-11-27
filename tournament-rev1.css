@@ -95,3 +95,10 @@
 .scs-stage-choice-option{display:grid;grid-template-columns:1fr auto;gap:6px 12px;width:100%;margin:10px 0;padding:16px!important;text-align:left;border:1px solid var(--border,#52728e)!important;border-radius:12px!important;background:var(--surface2,#112e4b)!important;color:var(--text,#f1f6ff)!important;font:inherit}
 .scs-stage-choice-option strong{font-size:19px}.scs-stage-choice-option small{grid-column:1;line-height:1.5;color:var(--muted,#b8c6d9)}.scs-stage-choice-option>span{grid-column:2;grid-row:1/3;align-self:center;font-size:26px}.scs-stage-choice-option:focus-visible{outline:2px solid #67e5eb;outline-offset:2px}
 .scs-stage-context{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px;margin:8px 0 16px;border:1px solid var(--border,#52728e);border-radius:10px;background:var(--surface2,#112e4b)}.scs-stage-context strong{font-size:16px}.scs-stage-context button{min-height:40px;padding:8px 10px;border:1px solid #6382b1;border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:13px}
+
+/* The event card and its workspace use the same identifying background. */
+:is(html:root[data-scs-sport],html) body:is(body,[class]) :is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay)[data-event-identity],
+:is(html:root[data-scs-sport],html) body:is(body,[class]) :is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay)[data-event-identity] :is([data-scs-workspace-content],.scs-gt-sheet,.scs-team-sheet,.scs-overview-card,.scs-tm-bracket-shell,.scs-tm-scroll,.scs-tm-details,.scs-assignment-control-card,.scs-tm-live-center,nav.scs-four-tab-nav){background:var(--scs-event-bg)!important}
+#scsTournamentPersistentHeader[data-event-identity]{background:var(--scs-event-bg)!important}
+.scs-event-card[data-event-color]{border-color:var(--scs-event-accent)!important}
+.scs-event-card[data-event-color] .scs-active-event-marker{border-color:var(--scs-event-accent);color:var(--scs-event-accent)}
