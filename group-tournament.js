@@ -517,7 +517,7 @@ function groupMatrix(onlyGroup=null,hideTabs=false){
     const m=matches.find(x=>Number(x.group)===g&&((x.a===a&&x.b===b)||(x.a===b&&x.b===a)));
     if(!m)return '<td>—</td>';
     const done=m.status==='approved'&&['L','R'].includes(m.winner),won=done&&(m.winner==='L'?m.a:m.b)===a;
-    return '<td><button type="button" class="scs-team-matrix-cell" data-group-matrix-match="'+escapeHTML(m.id)+'"><small>'+escapeHTML(m.id)+'</small><strong>'+(done?(won?'Won':'Lost'):m.status==='pending'?'Pending':'In progress')+'</strong><span>'+(done?(won?'1–0':'0–1'):'0–0')+'</span></button></td>';
+    return '<td><button type="button" class="scs-team-matrix-cell" data-result="'+(done?(won?'won':'lost'):'pending')+'" data-group-matrix-match="'+escapeHTML(m.id)+'"><small>'+escapeHTML(m.id)+'</small><strong>'+(done?(won?'Won':'Lost'):m.status==='pending'?'Pending':'In progress')+'</strong><span>'+(done?(won?'1–0':'0–1'):'0–0')+'</span></button></td>';
    }).join('')+'<td>'+(r?.w||0)+'–'+(r?.l||0)+'</td><td>'+(r?.gw||0)+'–'+(r?.gl||0)+'</td><td>'+(r?.pf||0)+'–'+(r?.pa||0)+'</td><td>'+((r?.pf||0)-(r?.pa||0))+'</td><td>'+(rank.get(a)||'—')+'</td></tr>';
   }).join('')+'</tbody></table></div>';
  }).join('')+'</section>';

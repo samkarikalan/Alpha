@@ -198,3 +198,10 @@ html body #scsTournamentContinue .scs-tmgr-tournament-card:has(.scs-tmgr-tournam
 html:root[data-scs-sport] body #scsTournamentContinue .scs-tmgr-tournament-open,
 html:root body #scsTournamentContinue .scs-tmgr-tournament-open:is(:active,.scs-press-feedback){filter:none!important;transform:none!important;position:static!important;-webkit-tap-highlight-color:transparent!important}
 :is(html:root[data-scs-sport],html) body:is(body,[class]) #scsTournamentContinue .scs-tmgr-tournament-open.scs-press-feedback{filter:none!important;box-shadow:none!important;background:transparent!important}
+
+/* Approved group results: colour plus the existing explicit outcome label. */
+:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsGroupTournament .scs-team-matrix-cell[data-result="won"]{background:#123e35!important;color:#b9f8d9!important;box-shadow:inset 4px 0 #4cda98!important}
+:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsGroupTournament .scs-team-matrix-cell[data-result="lost"]{background:#442b37!important;color:#ffd0d6!important;box-shadow:inset 4px 0 #f58292!important}
+:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsGroupTournament .scs-team-matrix-cell[data-result="won"] strong{color:#70efb3!important}
+:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsGroupTournament .scs-team-matrix-cell[data-result="lost"] strong{color:#ff9caa!important}
+:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsGroupTournament .scs-team-matrix-cell[data-result] small{color:inherit!important;opacity:.8}
