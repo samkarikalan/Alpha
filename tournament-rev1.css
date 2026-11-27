@@ -149,3 +149,39 @@
 :is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay) .scs-tournament-home-tabs{position:sticky!important;top:0!important;z-index:20;background:#102d4b!important;margin-top:0!important;box-shadow:0 1px 0 #45617f}
 
 :is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay) > .scs-tournament-home-tabs{position:absolute!important;top:var(--scs-workspace-top,0px)!important;left:8px;right:8px;margin:0!important}
+
+/* My Tournaments: colourful, readable tiles with the existing native actions. */
+html body #scsTournamentContinue .scs-tmgr-filters{display:flex;gap:0;padding:3px;border:1px solid #506d94!important;border-radius:14px!important;background:linear-gradient(130deg,#182e4c,#101f36)!important;overflow:hidden}
+html body #scsTournamentContinue .scs-tmgr-filters button{flex:1;min-width:0;min-height:50px;border:0!important;border-radius:11px!important;background:transparent!important;color:#c4d4e8!important;font-size:16px!important}
+html body #scsTournamentContinue .scs-tmgr-filters button.is-active{background:linear-gradient(155deg,#2687ff,#0656dc)!important;box-shadow:inset 0 1px 1px #b8e4ff80,0 3px 12px #006eff40!important;color:#fff!important}
+html body #scsTournamentContinue .scs-tmgr-filters button::before{display:inline-block;margin-right:8px;font-size:20px;vertical-align:-1px}
+html body #scsTournamentContinue [data-tm-filter="live"]::before{content:'▷'}
+html body #scsTournamentContinue [data-tm-filter="completed"]::before{content:'✓'}
+html body #scsTournamentContinue .scs-tmgr-new-tournament{position:relative;isolation:isolate;overflow:hidden;min-height:60px;border:1px solid #57a7ff!important;border-radius:14px!important;background:linear-gradient(125deg,#207cff,#0752d4 70%,#048ccf)!important;box-shadow:inset 0 1px 0 #b9ddff70,0 7px 20px #00153250!important;color:#fff!important;font-size:19px!important}
+html body #scsTournamentContinue .scs-tmgr-new-tournament::after{content:'';position:absolute;z-index:-1;width:150px;height:65px;right:-30px;bottom:-40px;transform:rotate(-24deg);border:9px solid #42d7ff40;border-radius:12px}
+html body #scsTournamentContinue .scs-tmgr-tournament-list{display:grid;gap:18px}
+html body #scsTournamentContinue .scs-tmgr-tournament-card{--tile-accent:#42baff;position:relative;isolation:isolate;margin:0!important;padding:16px!important;border:1px solid #537ba5!important;border-radius:16px!important;background:radial-gradient(ellipse at 100% 0%,#24578b35,transparent 65%),linear-gradient(140deg,#172c49,#091e32)!important;box-shadow:inset 0 1px 0 #bddbff16,0 7px 20px #00000026!important;color:#f3f7ff!important;overflow:visible}
+html body #scsTournamentContinue .scs-tmgr-tournament-card.knockout{--tile-accent:#25c8c2}
+html body #scsTournamentContinue .scs-tmgr-tournament-card.team{--tile-accent:#aa9eff}
+html body #scsTournamentContinue .scs-tmgr-tournament-card:has(.scs-tm-status-draft){--tile-accent:#ffae4a}
+html body #scsTournamentContinue .scs-tmgr-tournament-card:has(.scs-tm-status-completed){--tile-accent:#5ee0ad}
+html body #scsTournamentContinue .scs-tm-card-top{position:relative;z-index:2;gap:8px;min-height:40px;margin-bottom:16px}
+html body #scsTournamentContinue .scs-tm-card-format{color:#b6cae2!important;font-size:12px!important;letter-spacing:.06em}
+html body #scsTournamentContinue .scs-tm-card-format>span{color:var(--tile-accent);font-size:24px!important}
+html body #scsTournamentContinue .scs-tm-status{padding:7px 10px!important;border-radius:9px!important;font-size:12px!important;border:1px solid #498de2!important;white-space:nowrap;box-shadow:inset 0 1px 0 #ffffff25}
+html body #scsTournamentContinue .scs-tm-status-live{background:linear-gradient(135deg,#1477ee,#0754bf)!important;color:#f0f8ff!important}
+html body #scsTournamentContinue .scs-tm-status-draft{background:linear-gradient(135deg,#886011,#58410c)!important;border-color:#b18c2e!important;color:#fff0bc!important}
+html body #scsTournamentContinue .scs-tm-status-completed{background:#125343!important;border-color:#349d7a!important;color:#c6ffe6!important}
+html body #scsTournamentContinue .scs-tmgr-tournament-open{position:relative;z-index:1;padding:0!important;background:transparent!important;color:#f3f7ff!important}
+html body #scsTournamentContinue .scs-tm-card-title{position:relative;padding-left:13px;font-size:21px!important;line-height:1.35;letter-spacing:-.02em}
+html body #scsTournamentContinue .scs-tm-card-title::before{content:'';position:absolute;left:0;top:2px;bottom:2px;width:4px;border-radius:4px;background:var(--tile-accent);box-shadow:0 0 12px color-mix(in srgb,var(--tile-accent) 25%,transparent)}
+html body #scsTournamentContinue .scs-tm-card-date{color:#b7cce1!important;font-size:13px!important;margin:12px 0 18px!important}
+html body #scsTournamentContinue .scs-tm-card-date::before{content:'▦';margin-right:7px;color:#8db4d5}
+html body #scsTournamentContinue .scs-tm-card-action{padding-top:12px;border-color:#42668b!important;color:#6ecfff!important;font-size:16px!important;min-height:46px}
+html body #scsTournamentContinue .scs-tm-card-action>span{font-size:27px!important}
+html body #scsTournamentContinue .scs-tm-card-menu>summary{width:40px;height:40px;border:1px solid #718bb52b;border-radius:10px;background:linear-gradient(145deg,#314662,#1a304b)!important;color:#e0edff!important}
+html body #scsTournamentContinue .scs-tm-card-menu-panel{z-index:30}
+html body #scsTournamentContinue .scs-tmgr-tournament-card::after{content:'';position:absolute;right:16px;top:66px;width:78px;height:78px;z-index:0;pointer-events:none;opacity:.09;background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80' fill='none' stroke='%239cc9ff' stroke-width='4' stroke-linejoin='round'%3E%3Cpath d='M23 10h34v21c0 17-8 23-17 23s-17-6-17-23zM23 17H10v12c0 12 8 15 16 15m31-27h13v12c0 12-8 15-16 15M40 54v13m-16 5h32M30 67h20'/%3E%3C/svg%3E")}
+@media(max-width:360px){html body #scsTournamentContinue .scs-tmgr-tournament-card{padding:13px!important}html body #scsTournamentContinue .scs-tm-card-title{font-size:19px!important}html body #scsTournamentContinue .scs-tm-card-format{font-size:10px!important}}
+html body #scsTournamentContinue,html body #scsTournamentContinue > .scs-tmgr-card{background:#071b32!important;color:#f3f7ff!important}
+html body #scsTournamentContinue .scs-my-tournaments-club{color:#b6c9df!important}
