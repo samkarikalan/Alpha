@@ -2,7 +2,7 @@
 /* Sports Club Scheduler service worker — complete installed-app updates. */
 const APP_BASE = new URL('./', self.location.href);
 const CACHE_PREFIX = 'scs-repo-cache-' + encodeURIComponent(APP_BASE.pathname) + '-';
-const CACHE_NAME = CACHE_PREFIX + 'Rev1-group-result-colours';
+const CACHE_NAME = CACHE_PREFIX + 'Rev1-event-navigation-colours';
 const APP_SHELL = './index.html?v=Rev1';
 
 const ASSETS = [
