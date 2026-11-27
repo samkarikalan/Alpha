@@ -138,3 +138,14 @@
 .scs-event-flow-card .scs-event-flow-state-icon>span{display:grid;place-items:center;width:28px;height:28px;line-height:1;border-radius:50%;font-size:20px}
 .scs-event-flow-card .is-complete .scs-event-flow-state-icon>span{background:#207b51;color:#d8ffe8;border:1px solid #53c88b}.scs-event-flow-card .is-progress .scs-event-flow-state-icon>span{background:#155687;color:#e8f7ff;border:1px solid #6cb7eb}.scs-event-flow-card .is-waiting .scs-event-flow-state-icon>span{color:#c3d2df}
 .scs-event-flow-card .scs-event-ko-branches::before,.scs-event-flow-card .scs-event-flow-stage::before,.scs-event-flow-card .scs-event-flow-stage::after{border-color:#88b4cf!important}
+
+/* Home owns the menu; the tournament dashboard owns a single header back action. */
+#scsTournamentPersistentHeader > button[hidden]{display:none!important}
+#scsTournamentPersistentHeader > [data-tournament-home-back]{font-size:32px!important;line-height:1;min-width:40px;min-height:44px;background:transparent!important;border:0!important;color:inherit!important}
+:is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay) .scs-rev1-back{display:none!important}
+:is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay)[data-rev1-home-view="overview"] .scs-team-event-home,
+:is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay)[data-rev1-home-view="courts"] .scs-team-event-home,
+:is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay)[data-rev1-home-view="assign"] .scs-team-event-home{padding-top:0!important}
+:is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay) .scs-tournament-home-tabs{position:sticky!important;top:0!important;z-index:20;background:#102d4b!important;margin-top:0!important;box-shadow:0 1px 0 #45617f}
+
+:is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay) > .scs-tournament-home-tabs{position:absolute!important;top:var(--scs-workspace-top,0px)!important;left:8px;right:8px;margin:0!important}

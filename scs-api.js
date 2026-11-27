@@ -117,7 +117,19 @@ api.eventIdentity=(()=>{
  function label(state,parent){const id=state?._scsGroupEventId||state?._scsKoEventId||state?._scsClientTournamentId,base=parent?.events?.find(e=>String(e.id)===String(id))?.title||String(state?.title||'Event').replace(/\s*[—–-]\s*(?:Top|Bottom)\s+Knockout$/i,'');return base+(state?._scsGroupKnockoutStage!=null?' · KO '+(Number(state._scsGroupKnockoutStage)+1):'');}
  function apply(root,parent,id,name,stage){if(!root)return;const color=palette(id,parent,stage);root.dataset.eventIdentity=String(id);root.dataset.eventName=name;for(const property of properties){if(!property.startsWith('--scs-event-')){if(root.style.getPropertyValue(property))root.style.removeProperty(property);continue;}const value=property.includes('accent')?color.accent:color.bg;if(root.style.getPropertyValue(property)!==value)root.style.setProperty(property,value);}refreshHeader();}
  function clear(root){if(!root)return;delete root.dataset.eventIdentity;delete root.dataset.eventName;for(const property of properties)root.style.removeProperty(property);refreshHeader();}
- function refreshHeader(){let active=null;for(const id of ['scsGroupTournament','scsTeamTournament','scsTournamentOverlay']){const root=document.getElementById(id);if(root&&!root.hidden&&getComputedStyle(root).display!=='none')active=root;}const header=document.getElementById('scsTournamentPersistentHeader'),title=document.getElementById('scsTournamentDynamicTitle');if(active?.dataset.eventName){if(title&&title.textContent!==active.dataset.eventName)title.textContent=active.dataset.eventName;if(header){header.dataset.eventIdentity=active.dataset.eventIdentity;const bg=active.style.getPropertyValue('--scs-event-bg');if(header.style.getPropertyValue('--scs-event-bg')!==bg)header.style.setProperty('--scs-event-bg',bg);}}else if(header){delete header.dataset.eventIdentity;header.style.removeProperty('--scs-event-bg');}}
+ function updateHeaderNavigation(header,active){
+  if(!header)return;
+  const preview=active?.querySelector('.scs-tournament-home-tabs:not([hidden])');
+  const home=active?.querySelector('.scs-rev1-landing:not([hidden])');
+  const manager=document.getElementById('scsTournamentManager');
+  const isHome=!!home||(!active&&manager&&!manager.hidden&&getComputedStyle(manager).display!=='none');
+  const menu=header.querySelector('[aria-controls="scsTournamentSideMenu"]');
+  if(menu&&menu.hidden===isHome)menu.hidden=!isHome;
+  let back=header.querySelector('[data-tournament-home-back]');
+  if(!back){back=document.createElement('button');back.type='button';back.dataset.tournamentHomeBack='';back.textContent='‹';back.setAttribute('aria-label','Back to Home');back.onclick=()=>{for(const id of ['scsGroupTournament','scsTeamTournament','scsTournamentOverlay']){const root=document.getElementById(id);if(root&&!root.hidden&&getComputedStyle(root).display!=='none'){const action=root.querySelector('.scs-rev1-back');if(action){action.click();const pane=root.querySelector('[data-scs-workspace-content]');if(pane)pane.scrollTop=0;break;}}}};header.insertBefore(back,header.querySelector('strong'));}
+  if(back.hidden===!!preview)back.hidden=!preview;
+ }
+ function refreshHeader(){let active=null;for(const id of ['scsGroupTournament','scsTeamTournament','scsTournamentOverlay']){const root=document.getElementById(id);if(root&&!root.hidden&&getComputedStyle(root).display!=='none')active=root;}const header=document.getElementById('scsTournamentPersistentHeader'),title=document.getElementById('scsTournamentDynamicTitle');updateHeaderNavigation(header,active);if(active?.dataset.eventName){if(title&&title.textContent!==active.dataset.eventName)title.textContent=active.dataset.eventName;if(header){header.dataset.eventIdentity=active.dataset.eventIdentity;const bg=active.style.getPropertyValue('--scs-event-bg');if(header.style.getPropertyValue('--scs-event-bg')!==bg)header.style.setProperty('--scs-event-bg',bg);}}else if(header){delete header.dataset.eventIdentity;header.style.removeProperty('--scs-event-bg');}}
  return {palette,paint,label,apply,clear,refreshHeader};
 })();
 api.events.groupComplete=function(id,state){

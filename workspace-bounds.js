@@ -22,7 +22,7 @@
     if(!content){content=document.createElement('div');content.dataset.scsWorkspaceContent='';root.prepend(content);}
     // Keep the same navigation nodes/handlers outside the clipped scrolling pane.
     for(const child of Array.from(root.children)){
-     if(child===content||child.matches(bars)||getComputedStyle(child).position==='fixed')continue;
+     if(child===content||child.matches(bars)||child.matches('[data-tournament-home-tabs]')||getComputedStyle(child).position==='fixed')continue;
      content.append(child);
     }
     if(!root.classList.contains('scs-workspace-shell'))root.classList.add('scs-workspace-shell');
@@ -32,8 +32,11 @@
    const bottom=Math.max(0,innerHeight-edge);globalBottom=Math.max(globalBottom,bottom);
    set(root,'--scs-workspace-bottom',bottom);set(root,'--scs-workspace-top',top);
    // Content coordinates are relative to a full-viewport shell, never a legacy header offset.
+   const tabs=root.querySelector('[data-tournament-home-tabs]');
+   if(tabs&&root.classList.contains('scs-workspace-shell')){if(tabs.parentElement!==root)root.append(tabs);watch(tabs);set(tabs,'top',top);}
+   const tabHeight=tabs&&visible(tabs)?tabs.getBoundingClientRect().height:0;
    if(root.classList.contains('scs-workspace-shell')){for(const [key,value] of [['top','0px'],['left','0px'],['right','0px']])if(root.style.getPropertyValue(key)!==value)root.style.setProperty(key,value,'important');}
-   const content=root.querySelector(':scope > [data-scs-workspace-content]');if(content){watch(content);set(content,'top',top);}
+   const content=root.querySelector(':scope > [data-scs-workspace-content]');if(content){watch(content);set(content,'top',top+tabHeight);}
    if(!root.hasAttribute('data-scs-workspace-bounded'))root.setAttribute('data-scs-workspace-bounded','');
   });
   set(document.documentElement,'--scs-workspace-bottom',globalBottom);set(document.documentElement,'--scs-workspace-top',top);
