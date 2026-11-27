@@ -501,7 +501,7 @@ function teamBottomNav(){
  const active=mainMode?'home':tab==='home'?'event':tab==='setup'||tab==='clubs'?'clubs':tab==='match'?'match':'tournament';
  return window.ScsApi.navigation.bottom({active,attribute:'data-team-nav',ariaLabel:'Team tournament sections',tournamentName:main?.title||'Tournament',eventName:main?.events?.find(e=>e.id===activeEventId)?.title||state.title||'Event'});
 }
-function render(){let r=root();if(!r)return;if(window.ScsApi?.tournamentAccess)ScsApi.tournamentAccess.attach(r,viewOnly);
+function render(){let r=root();if(!r)return;if(!mainMode&&!viewOnly)state=window.SCSEventCourtPool?.reconcile(state,main,activeEventId)||state;if(window.ScsApi?.tournamentAccess)ScsApi.tournamentAccess.attach(r,viewOnly);
  if(creatingEvent){
  r.innerHTML='<div class="scs-gt-sheet scs-team-sheet scs-team-create-sheet" role="dialog" aria-label="Add Team Tournament Event"><header><strong>'+esc(main.title)+'</strong><button type="button" data-event-cancel aria-label="Close">✕</button></header>'+eventNameForm()+'</div>';
  r.querySelectorAll('[data-event-cancel]').forEach(b=>b.onclick=close);

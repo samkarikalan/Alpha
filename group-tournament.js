@@ -51,6 +51,7 @@ async function groupKnockoutOpenData(stage,section){if(viewOnly){const saved=JSO
   saved.livePage=true;saved.live=false;saved.numCourts=Math.max(1,Number(saved.numCourts)||2);
   localStorage.setItem(key,JSON.stringify(saved));
  }
+ saved=window.SCSEventCourtPool?.reconcile(saved,groupMain,id)||saved;
  // Upgrade V413/V414 saved group brackets without overwriting match progress.
  if(saved&&!saved.live&&!saved.livePage){saved.livePage=true;saved.assistFinalized=true;saved.assistAssignmentsConfirmed=true;saved.knockoutFixturesGenerated=true;localStorage.setItem(key,JSON.stringify(saved));}
  if(!window.SCSTournament||typeof window.SCSTournament.open!=='function'){alert('Knockout module is unavailable.');return}
@@ -125,7 +126,7 @@ async function syncGroupTournamentNow(){
  if(!viewOnly)localStorage.setItem(groupEventId?groupEventKey(groupEventId):KEY,JSON.stringify(Object.assign({},row.state,{_scsCloudTournamentId:row.id||cloudTournamentId})));
  render();return true;
 }
-function applyState(v){if(!v)return;eventCourtNumbers=Array.isArray(v.courtNumbers)?v.courtNumbers:null;groupSwapSelection=null;lastGroupSwap=null;groupExpanded={};cloudTournamentId=v._scsCloudTournamentId||'';clientTournamentId=v._scsClientTournamentId||'';title=String(v.title||'Group Stage + Knockout');scoringRules=v.scoringRules||null;config=v.config||config;created=!!v.created;assistMode=typeof v.assistMode==='boolean'?v.assistMode:!created;assistPatternReady=!!v.assistPatternReady;pool=Array.isArray(v.pool)?v.pool:[];groupSelectedPlayerDetails=Array.isArray(v.selectedPlayerDetails)?v.selectedPlayerDetails:[];assignments=v.assignments||{};teamDrafts=Array.isArray(v.teamDrafts)?cleanTeamDrafts(v.teamDrafts):Object.keys(assignments).sort().map(k=>assignments[k]).filter(x=>Array.isArray(x)&&x.length===2);started=!!v.started;matches=Array.isArray(v.matches)?v.matches:[];courtCount=Number.isInteger(Number(v.courtCount))?Number(v.courtCount):2;assignmentSerial=Number(v.assignmentSerial)||0}
+function applyState(v){if(!v)return;v=window.SCSEventCourtPool?.reconcile(v,groupMain,groupEventId)||v;eventCourtNumbers=Array.isArray(v.courtNumbers)?v.courtNumbers:null;groupSwapSelection=null;lastGroupSwap=null;groupExpanded={};cloudTournamentId=v._scsCloudTournamentId||'';clientTournamentId=v._scsClientTournamentId||'';title=String(v.title||'Group Stage + Knockout');scoringRules=v.scoringRules||null;config=v.config||config;created=!!v.created;assistMode=typeof v.assistMode==='boolean'?v.assistMode:!created;assistPatternReady=!!v.assistPatternReady;pool=Array.isArray(v.pool)?v.pool:[];groupSelectedPlayerDetails=Array.isArray(v.selectedPlayerDetails)?v.selectedPlayerDetails:[];assignments=v.assignments||{};teamDrafts=Array.isArray(v.teamDrafts)?cleanTeamDrafts(v.teamDrafts):Object.keys(assignments).sort().map(k=>assignments[k]).filter(x=>Array.isArray(x)&&x.length===2);started=!!v.started;matches=Array.isArray(v.matches)?v.matches:[];courtCount=Number.isInteger(Number(v.courtCount))?Number(v.courtCount):2;assignmentSerial=Number(v.assignmentSerial)||0}
 function open(mode,viewState){
  const existing=el();if(existing)existing.hidden=false;
  mixedContext=null;
@@ -275,7 +276,7 @@ function groupRosterDetails(){return players()+teamsCard()+(groupSwapAllowed()&&
 function groupEventSchedule(){
  const info='<h3>Schedule & Courts</h3>';
  if(viewOnly)return info+'<p>'+courtCount+' court'+(courtCount===1?'':'s')+' · '+(started?'Event live':'Event not started')+'</p>';
- if(started)return info+'<p>'+courtCount+' court'+(courtCount===1?'':'s')+' · Event live</p><button type="button" class="scs-gt-primary" data-open-group-match>Open Assign &amp; Approve →</button>';
+ if(started)return info+'<p>'+courtCount+' court'+(courtCount===1?'':'s')+' · Event live</p><div class="scs-tm-court-picker"><button type="button" data-event-courts="-1" aria-label="Fewer courts">−</button><b>'+courtCount+'</b><button type="button" data-event-courts="1" aria-label="More courts">+</button></div><button type="button" class="scs-gt-primary" data-open-group-match>Open Assign &amp; Approve →</button>';
  const ready=created&&assistComplete(2)&&assistComplete(3);
  return info+'<p>Review the groups and choose courts before starting.</p><div class="scs-tm-court-picker"><button type="button" data-event-courts="-1" aria-label="Fewer courts">−</button><b data-event-court-count>'+courtCount+'</b><button type="button" data-event-courts="1" aria-label="More courts">+</button></div><button type="button" class="scs-gt-primary" data-start '+(ready?'':'disabled')+'>▶ Start Event</button>'+(!ready?'<p>Complete and confirm event setup to enable Start Event.</p>':'')+'<button type="button" data-open-group-assist>'+(created?'Edit event setup':'Complete event setup')+'</button>';
 }
