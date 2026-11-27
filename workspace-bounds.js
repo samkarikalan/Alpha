@@ -9,7 +9,7 @@
  function watch(el){if(el&&resize&&!observed.has(el)){observed.add(el);resize.observe(el);}}
  function set(el,key,value){const next=Math.round(value)+'px';if(el.style.getPropertyValue(key)!==next)el.style.setProperty(key,next);}
  function refresh(){
-  frame=0;const viewport=window.visualViewport;
+  if(frame){cancelAnimationFrame(frame);frame=0;}const viewport=window.visualViewport;
   const screenBottom=Math.min(innerHeight,viewport?viewport.offsetTop+viewport.height:innerHeight);
   let top=viewport?.offsetTop||0;
   document.querySelectorAll('#scsTournamentPersistentHeader,#scsPracticeSharedHeader').forEach(header=>{watch(header);if(visible(header))top=Math.max(top,header.getBoundingClientRect().bottom);});
@@ -28,7 +28,6 @@
    }
    let edge=screenBottom;
    root.querySelectorAll(bars).forEach(bar=>{watch(bar);if(visible(bar)&&getComputedStyle(bar).position==='fixed')edge=Math.min(edge,bar.getBoundingClientRect().top);});
-   const syncBar=document.getElementById('scsTournamentLocalStatus');if(visible(syncBar))edge=Math.min(edge,syncBar.getBoundingClientRect().top);
    const bottom=Math.max(0,innerHeight-edge);globalBottom=Math.max(globalBottom,bottom);
    set(root,'--scs-workspace-bottom',bottom);set(root,'--scs-workspace-top',top);
    // Content coordinates are relative to a full-viewport shell, never a legacy header offset.
@@ -39,7 +38,7 @@
   set(document.documentElement,'--scs-workspace-bottom',globalBottom);set(document.documentElement,'--scs-workspace-top',top);
  }
  function schedule(){if(!frame)frame=requestAnimationFrame(refresh);}
- function init(){refresh();new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','hidden']});window.addEventListener('resize',schedule);window.visualViewport?.addEventListener('resize',schedule);window.visualViewport?.addEventListener('scroll',schedule);}
- window.SCSWorkspaceBounds=Object.freeze({refresh:schedule});
+ function init(){refresh();new MutationObserver(refresh).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','hidden']});window.addEventListener('resize',schedule);window.visualViewport?.addEventListener('resize',schedule);window.visualViewport?.addEventListener('scroll',schedule);}
+ window.SCSWorkspaceBounds=Object.freeze({refresh:schedule,commit(){window.scsRefreshTournamentHeader?.();refresh();}});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

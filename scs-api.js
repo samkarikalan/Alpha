@@ -95,7 +95,7 @@ api.events.mountHome=function(root,options={}){
  if(!root)throw Error('Tournament Home host is required');
  root.classList.add('scs-api-home-host');
  root.innerHTML=api.events.homePage(options);
- queueMicrotask(()=>{api.events.styleCards(root,options);window.SCSTournamentCourts?.mount(root,options);});
+ queueMicrotask(()=>{api.events.styleCards(root,options);window.SCSTournamentCourts?.mount(root,options);window.SCSWorkspaceBounds?.commit();});
  return root;
 };
 // Only a page's own uncached read may show a loader. Cached navigation stays immediate.

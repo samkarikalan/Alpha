@@ -718,6 +718,7 @@ el().querySelectorAll('[data-match-tab]').forEach(x=>x.onclick=()=>{matchTab=x.d
 refreshGroupEventGate();
 if(!el()._scsEventGateBound){el()._scsEventGateBound=true;const refresh=event=>{if(event.target.closest?.('[data-group-rules]'))ScsApi.events.keepEditorPosition(el(),'[data-group-rule-count]',refreshGroupEventGate);else queueMicrotask(refreshGroupEventGate);};el().addEventListener('input',refresh);el().addEventListener('change',refresh);}
 if(groupMain&&groupEventId&&!viewOnly)SCSEventCourtPool.connect(el(),{parent:()=>groupMain,eventId:groupEventId,format:groupMain._scsTournamentFormat||(mixedContext?'knockout':'group'),state:()=>({courtCount,courtNumbers:eventCourtNumbers}),onChange:async numbers=>{eventCourtNumbers=numbers;courtCount=numbers.length;save();render();}});
+window.SCSWorkspaceBounds?.commit();
 let create=el().querySelector('[data-action="create"]');if(create)create.onclick=()=>{const input=el().querySelector('[data-title]');title=String(input?input.value:title).trim().slice(0,120);if(!title){alert('Enter a tournament name before creating the groups.');if(input)input.focus();return}if(!groupSetupStatus().valid){alert(groupSetupStatus().message);return}config.per=groupSetupStatus().per;created=true;tab='main';save();render()};
 }
 function openMixedEvent(parent,event,state,onSave,onHome,section){
