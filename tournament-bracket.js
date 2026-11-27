@@ -20,7 +20,7 @@ function koSaveMain(){
 function koRememberOpenedEvent(parent,eventId){
  queueMicrotask(function(){if(koMain!==parent||koActiveId!==eventId)return;try{koSaveMain()}catch(error){console.warn('Could not remember the opened event:',error);}});
 }
-function koOpenHomeEvent(id){
+async function koOpenHomeEvent(id,section){
  const host=root,item=koMain?.events?.find(e=>String(e.id)===String(id));
  let status=host?.querySelector('[data-ko-open-status]');
  if(!status&&host){status=document.createElement('p');status.dataset.koOpenStatus='';status.setAttribute('role','alert');status.style.cssText='padding:12px;border:1px solid #c48d55;border-radius:8px;line-height:1.5;overflow-wrap:anywhere';const home=host.querySelector('.scs-team-event-home');(home||host).prepend(status);}
@@ -28,7 +28,7 @@ function koOpenHomeEvent(id){
  try{
   if(!item)throw Error('This event is no longer in the tournament. Refresh the tournament list.');
   if(item.format==='group'&&typeof window.SCSGroupTournament?.openMixedEvent!=='function')throw Error('The Group event module has not loaded. Reload the app and retry.');
-  koOpenTournamentEvent(item.id,'flowchart');
+  if(item.format==='group'){const saved=koEventLoad(item.id),choice=await ScsApi.events.chooseEventStage(item,saved);if(choice===null){if(status)status.hidden=true;return;}SCSGroupTournament.setStageScope(Number(saved?.config?.knockouts)>1?choice:null,item.id);koOpenTournamentEvent(item.id,choice==='group'?(section||'main'):'stage-shell');if(choice!=='group'){await SCSGroupTournament.openEventStage(choice,section==='match'?'match':'draw');if(section==='main')SCSTournament.switchTournamentTab('main');}}else koOpenTournamentEvent(item.id,'main');
   if(status)status.hidden=true;
  }catch(error){
   if(host)host.hidden=false;
@@ -226,7 +226,7 @@ function koHomeRender(){
   if(addButton){home.insertBefore(primaryActions,addButton);primaryActions.appendChild(addButton);}else home.appendChild(primaryActions);
   primaryActions.appendChild(complete);
  }
- root.querySelectorAll('[data-ko-nav]').forEach(function(b){if(b.dataset.koNav==='clubs'){var label=b.querySelector('.scs-tm-nav-label');if(label)label.textContent='Teams';}b.onclick=function(){var t=b.dataset.koNav;if(t==='home')koShowHome();else if(koActiveId)koOpenTournamentEvent(koActiveId,t==='event'?'main':t==='clubs'?'players':t==='match'?'match':'flowchart');else alert('Add an event first.')}});
+ root.querySelectorAll('[data-ko-nav]').forEach(function(b){if(b.dataset.koNav==='clubs'){var label=b.querySelector('.scs-tm-nav-label');if(label)label.textContent='Teams';}b.onclick=function(){var t=b.dataset.koNav;if(t==='home')koShowHome();else if(koActiveId){var page=t==='event'?'main':t==='clubs'?'players':t==='match'?'match':'flowchart';if(koIsGroup(koActiveId))koOpenHomeEvent(koActiveId,page);else koOpenTournamentEvent(koActiveId,page);}else alert('Add an event first.')}});
 }
 // Assist is available only until this event starts; completed bracket setup is not a start.
 function koAssistAvailable(id){return !!(!readonly&&koMain&&koMain.events.some(function(e){return e.id===id})&&!koAssistHasStarted(koEventLoad(id)));}
@@ -1245,7 +1245,7 @@ function organizeTournamentTabs(){
  panel('match',match?[match]:[function(){var empty=document.createElement('section');empty.className='scs-tm-pool';empty.innerHTML='<h3>Assign &amp; Approve</h3><p>Start the knockout tournament to assign courts and conduct matches.</p>';
 return empty}()]);
  if(groupChildMode&&window.SCSGroupTournament?.stageTabs){
-  ['flowchart','match'].forEach(function(page){var target=root.querySelector('[data-tm-panel="'+page+'"]');if(!target)return;var holder=document.createElement('div');holder.innerHTML=SCSGroupTournament.stageTabs(String(draw._scsGroupKnockoutStage),page==='match');var navigation=holder.firstElementChild;target.prepend(navigation);navigation.querySelectorAll('[data-event-stage]').forEach(function(button){button.onclick=function(){var stage=button.dataset.eventStage,mode=button.dataset.eventStageMode;if(String(stage)===String(draw._scsGroupKnockoutStage))return;close();SCSGroupTournament.openEventStage(stage,mode);};});});
+  ['flowchart','match'].forEach(function(page){var target=root.querySelector('[data-tm-panel="'+page+'"]');if(!target)return;var holder=document.createElement('div');holder.innerHTML=SCSGroupTournament.stageTabs(String(draw._scsGroupKnockoutStage),page==='match');var navigation=holder.firstElementChild;target.prepend(navigation);navigation.querySelectorAll('[data-event-stage]').forEach(function(button){button.onclick=function(){var stage=button.dataset.eventStage,mode=button.dataset.eventStageMode;if(stage==='choose'){ScsApi.events.chooseEventStage({title:draw.title},{config:{knockouts:2}}).then(function(choice){if(choice===null||String(choice)===String(draw._scsGroupKnockoutStage))return;close();SCSGroupTournament.setStageScope(choice);SCSGroupTournament.openEventStage(choice,mode);});return;}if(String(stage)===String(draw._scsGroupKnockoutStage))return;close();SCSGroupTournament.openEventStage(stage,mode);};});});
  }
  // Spectators reuse the live Match Center markup but cannot operate any court or match.
  if(readonly&&live){var viewPanel=root.querySelector('[data-tm-panel="match"]');if(viewPanel){viewPanel.querySelectorAll('button').forEach(function(btn){if(!btn.closest('.scs-tm-live-tabs'))btn.remove()});viewPanel.querySelectorAll('[onclick]').forEach(function(node){var call=node.getAttribute('onclick')||'';if(!/^SCSTournament\.liveTab\(/.test(call))node.removeAttribute('onclick')});}}
@@ -1622,7 +1622,7 @@ function refreshKnockoutPanels(){
  var panel=root.querySelector('[data-tm-panel="match"]');if(!panel)return false;
  var html=liveTournamentPanel();
  if(panel._scsLiveMarkup!==html){
-  panel._scsLiveMarkup=html;var nav=panel.querySelector('.scs-event-stage-tabs');
+  panel._scsLiveMarkup=html;var nav=panel.querySelector('.scs-event-stage-tabs,.scs-stage-context');
   Array.from(panel.children).forEach(function(child){if(child!==nav)child.remove();});
   panel.insertAdjacentHTML('beforeend',html);
  }

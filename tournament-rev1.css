@@ -81,3 +81,17 @@
 .scs-event-court-overview{margin:12px 0 20px}.scs-event-court-overview h3{font-size:16px}.scs-event-court-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;padding:12px;margin:8px 0;border:1px solid var(--border,#52728e);border-radius:10px;background:var(--surface2,#112e4b)}.scs-event-court-row>span{text-align:right;color:#70d9c2}.scs-event-court-row>small{grid-column:1/-1;line-height:1.5;overflow-wrap:anywhere;color:var(--muted,#b8c6d9)}.scs-event-court-row[data-court-state="approval"]>span{color:#c69bf7}
 
 .scs-court-count-pending{position:relative}.scs-court-count-pending::after{content:"";display:inline-block;width:10px;height:10px;margin-left:5px;border:2px solid #52728e;border-top-color:var(--sport-accent,#67e5eb);border-radius:50%;vertical-align:middle;animation:scs-page-spin .8s linear infinite}
+
+/* Courts and refresh belong to one clearly bounded control card. */
+.scs-assignment-control-card{padding:16px;margin:14px 0 24px;border:1px solid var(--border,#52728e);border-radius:16px;background:var(--surface2,#112e4b)}
+.scs-assignment-control-card .scs-tm-live-center-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0}
+.scs-assignment-control-card .scs-tm-live-center-head h3{margin:0;font-size:18px}.scs-assignment-control-card .scs-tm-live-center-head p{font-size:12px;line-height:1.5;margin:5px 0;color:var(--muted,#b8c6d9)}
+.scs-assignment-control-card .scs-tm-court-picker{display:flex;align-items:center;gap:12px}.scs-assignment-control-card .scs-tm-court-picker button{width:42px;min-width:42px;min-height:42px;padding:6px}
+.scs-assignment-control-card .scs-event-court-overview{margin:14px 0}.scs-assignment-control-card .scs-event-court-overview h3{font-size:13px;color:var(--muted,#b8c6d9);font-weight:600}
+.scs-assignment-control-card .scs-assignment-refresh{padding-top:12px;border-top:1px solid var(--border,#52728e);margin-bottom:0!important}
+.scs-assignment-section{margin:22px 0}.scs-assignment-section>h3{display:flex;align-items:center;justify-content:space-between;margin:0 0 12px;font-size:18px}.scs-assignment-section>h3>span{font-size:13px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--surface2,#112e4b);color:var(--muted,#b8c6d9)}
+.scs-assignment-empty{padding:8px 0;margin:0;font-size:14px;line-height:1.5;color:var(--muted,#b8c6d9)}
+
+.scs-stage-choice-option{display:grid;grid-template-columns:1fr auto;gap:6px 12px;width:100%;margin:10px 0;padding:16px!important;text-align:left;border:1px solid var(--border,#52728e)!important;border-radius:12px!important;background:var(--surface2,#112e4b)!important;color:var(--text,#f1f6ff)!important;font:inherit}
+.scs-stage-choice-option strong{font-size:19px}.scs-stage-choice-option small{grid-column:1;line-height:1.5;color:var(--muted,#b8c6d9)}.scs-stage-choice-option>span{grid-column:2;grid-row:1/3;align-self:center;font-size:26px}.scs-stage-choice-option:focus-visible{outline:2px solid #67e5eb;outline-offset:2px}
+.scs-stage-context{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px;margin:8px 0 16px;border:1px solid var(--border,#52728e);border-radius:10px;background:var(--surface2,#112e4b)}.scs-stage-context strong{font-size:16px}.scs-stage-context button{min-height:40px;padding:8px 10px;border:1px solid #6382b1;border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:13px}
