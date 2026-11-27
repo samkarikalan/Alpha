@@ -28,7 +28,7 @@ async function koOpenHomeEvent(id,section){
  try{
   if(!item)throw Error('This event is no longer in the tournament. Refresh the tournament list.');
   if(item.format==='group'&&typeof window.SCSGroupTournament?.openMixedEvent!=='function')throw Error('The Group event module has not loaded. Reload the app and retry.');
-  if(item.format==='group'){const saved=koEventLoad(item.id),choice=await ScsApi.events.chooseEventStage(item,saved);if(choice===null){if(status)status.hidden=true;return;}SCSGroupTournament.setStageScope(Number(saved?.config?.knockouts)>1?choice:null,item.id);koOpenTournamentEvent(item.id,choice==='group'?(section||'main'):'stage-shell');if(choice!=='group'){await SCSGroupTournament.openEventStage(choice,section==='match'?'match':'draw');if(section==='main')SCSTournament.switchTournamentTab('main');}}else koOpenTournamentEvent(item.id,'main');
+  if(item.format==='group'){const saved=koEventLoad(item.id),choice=await ScsApi.events.chooseEventStage(item,saved);if(choice===null){if(status)status.hidden=true;return;}SCSGroupTournament.setStageScope(choice,item.id);koOpenTournamentEvent(item.id,choice==='group'?(section||'main'):'stage-shell');if(choice!=='group'){await SCSGroupTournament.openEventStage(choice,section==='match'?'match':'draw');if(section==='main')SCSTournament.switchTournamentTab('main');}}else koOpenTournamentEvent(item.id,'main');
   if(status)status.hidden=true;
  }catch(error){
   if(host)host.hidden=false;
