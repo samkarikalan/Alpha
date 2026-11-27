@@ -64,7 +64,7 @@ api.navigation.bottom=function({active='home',attribute='data-team-nav',ariaLabe
  };
  if(active==='clubs'||active==='teams')active='event';
  const items=[['home','Home',icons.home],['event','Event',icons.event],['tournament','Draw & Results',icons.tournament],['match','Assign & Approve',icons.match]];
- return '<nav class="scs-tm-organized-tabs scs-tm-bottom-nav scs-gt-bottom-nav scs-team-bottom-nav scs-four-tab-nav" aria-label="'+esc(ariaLabel)+'">'+items.map(([key,label,icon])=>'<button type="button" '+esc(attribute)+'="'+key+'" class="'+(active===key?'active':'')+'"'+(active===key?' aria-current="page"':'')+'><span class="scs-tm-nav-icon" aria-hidden="true">'+icon+'</span><span class="scs-tm-nav-label">'+label+(key==='event'&&eventName?'<small class="scs-active-event-name">'+esc(eventName)+'</small>':'')+'</span></button>').join('')+'</nav>';
+ return '<nav class="scs-tm-organized-tabs scs-tm-bottom-nav scs-gt-bottom-nav scs-team-bottom-nav scs-four-tab-nav" aria-label="'+esc(ariaLabel)+'">'+items.map(([key,label,icon])=>'<button type="button" '+esc(attribute)+'="'+key+'" class="'+(active===key?'active':'')+'"'+(active===key?' aria-current="page"':'')+'><span class="scs-tm-nav-icon" aria-hidden="true">'+icon+'</span><span class="scs-tm-nav-label">'+label+'</span></button>').join('')+'</nav>';
 };
 api.events.overview=function({name='Event',parent='',format='',sport='',rules='',teams=[],matches=[],courts=null,status=''}={}){
  const done=matches.filter(m=>m.status==='approved'||m.status==='completed'||m.winner!=null&&m.approved===true).length,total=matches.length;
