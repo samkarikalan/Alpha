@@ -185,3 +185,16 @@ html body #scsTournamentContinue .scs-tmgr-tournament-card::after{content:'';pos
 @media(max-width:360px){html body #scsTournamentContinue .scs-tmgr-tournament-card{padding:13px!important}html body #scsTournamentContinue .scs-tm-card-title{font-size:19px!important}html body #scsTournamentContinue .scs-tm-card-format{font-size:10px!important}}
 html body #scsTournamentContinue,html body #scsTournamentContinue > .scs-tmgr-card{background:#071b32!important;color:#f3f7ff!important}
 html body #scsTournamentContinue .scs-my-tournaments-club{color:#b6c9df!important}
+
+/* The tournament tile is one open target; its options menu remains independent. */
+html body #scsTournamentContinue .scs-tmgr-tournament-open{position:static!important;-webkit-tap-highlight-color:transparent!important;outline:none!important;box-shadow:none!important}
+html body #scsTournamentContinue .scs-tmgr-tournament-open::after{content:'';position:absolute;inset:0;z-index:2;border-radius:inherit;cursor:pointer}
+html body #scsTournamentContinue .scs-tm-card-top{pointer-events:none;z-index:3}
+html body #scsTournamentContinue .scs-tm-card-menu{pointer-events:auto}
+html body #scsTournamentContinue .scs-tmgr-tournament-card:has(.scs-tmgr-tournament-open:active),
+html body #scsTournamentContinue .scs-tmgr-tournament-card:has(.scs-tmgr-tournament-open.scs-press-feedback){filter:brightness(1.16);box-shadow:inset 0 0 0 2px #8bdcff80,0 7px 20px #00000026!important}
+html body #scsTournamentContinue .scs-tmgr-tournament-open:is(:active,.scs-press-feedback){filter:none!important;background:transparent!important}
+html body #scsTournamentContinue .scs-tmgr-tournament-card:has(.scs-tmgr-tournament-open:focus-visible){outline:3px solid #8bdcff;outline-offset:3px}
+html:root[data-scs-sport] body #scsTournamentContinue .scs-tmgr-tournament-open,
+html:root body #scsTournamentContinue .scs-tmgr-tournament-open:is(:active,.scs-press-feedback){filter:none!important;transform:none!important;position:static!important;-webkit-tap-highlight-color:transparent!important}
+:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsTournamentContinue .scs-tmgr-tournament-open.scs-press-feedback{filter:none!important;box-shadow:none!important;background:transparent!important}
