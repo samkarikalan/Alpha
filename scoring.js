@@ -132,7 +132,7 @@ async function openPicker(){
     var matches=[];
     (sessions||[]).forEach(function(sess){var rounds=sess.rounds_data||[];if(!rounds.length)return;var round=rounds[rounds.length-1];(round.games||[]).forEach(function(g,gi){
       var winnerOn = g.winnerEnabled===true || round.winnerEnabled===true;
-      var tournament=!!round.tournament,available=winnerOn&&!g.winner&&!g.conduct_finished&&((conductMode&&g.score_status==='scored')||(g.score_status!=='scored'));
+      var tournament=!!round.tournament,available=winnerOn&&(!tournament||!!g.court&&g.court_center_status!=='approved')&&!g.winner&&!g.conduct_finished&&((conductMode&&g.score_status==='scored')||(g.score_status!=='scored'));
       if(available) matches.push({sessionId:sess.id,round:round.round,court:g.court||gi+1,pair1:g.pair1||[],pair2:g.pair2||[],game:g,sport:g.sport||round.sport||(round.tournament&&round.tournament.sport)||sess.sport,courtCenter:round.courtCenter===true,tournament:tournament,passwordRef:round.tournament?{tournamentId:round.tournament._scsCloudTournamentId,matchKey:String(g.tournament_match)}:null,scoringRules:round.tournament&&round.tournament.scoringRules,matchNo:tournamentMatchLabel(round.tournament,g),scoreReady:g.score_status==='scored'});
     });});
     /* Tournament matches are locally persisted and need no Supabase session. */

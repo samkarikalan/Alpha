@@ -1751,7 +1751,7 @@ async function dbGetLiveSessions(options = {}) {
     if(options.strict && navigator.onLine === false)throw new Error('Connect to the internet to refresh matches.');
     if(window.SCSSportContext?.appModule==='scoreboard'){
       const club=getMyClub();if(!club?.id)return [];
-      return await sbGet('sessions','club_id=eq.'+encodeURIComponent(club.id)+'&status=eq.live&order=created_at.asc&select=id,rounds_data,started_by,updated_at,club_id,handover_pin')||[];
+      return await sbGet('sessions','club_id=eq.'+encodeURIComponent(club.id)+'&or=(status.eq.live,and(status.eq.completed,started_by.eq.__SCS_TOURNAMENT_COURT_CENTER__))&order=created_at.asc&select=id,status,rounds_data,started_by,updated_at,club_id,handover_pin')||[];
     }
     const isViewer = (typeof appMode !== 'undefined') && appMode === 'viewer';
     if (isViewer) {
