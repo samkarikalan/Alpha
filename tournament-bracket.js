@@ -885,6 +885,8 @@ function details(){
 }
 // V330: Generated knockout fixtures use the existing shared SCS match card.
 // The bracket remains the authoritative source for match positions and BYEs.
+var allMatchesExpanded=new Map();
+function allMatchesKey(){return JSON.stringify([draw?._scsGroupEventId,draw?._scsGroupKnockoutStage,draw?._scsClientTournamentId||draw?.id||draw?.title]);}
 function knockoutFixtureCards(onlyMatchId){
  if(!draw||!draw.matches||!draw.matches.length||!draw.knockoutFixturesGenerated)return '';
  // Capture completed scoring details while the court session is still available.
@@ -901,7 +903,7 @@ function knockoutFixtureCards(onlyMatchId){
   if(!groups.has(round))groups.set(round,[]);
   groups.get(round).push(m);
  });
- var html=onlyMatchId?'':'<section class="scs-ko-generated-fixtures"><h3>Generated Matches</h3>';
+ var html=onlyMatchId?'':'<details class="scs-ko-generated-fixtures scs-ko-all-matches" '+(allMatchesExpanded.get(allMatchesKey())?'open ':'')+'data-matches-key="'+esc(allMatchesKey())+'" ontoggle="SCSTournament.rememberMatchesExpanded(this.open,this.dataset.matchesKey)"><summary>All Matches <span aria-hidden="true">⌄</span></summary>';
  groups.forEach(function(matches,round){
   if(!onlyMatchId)html+='<section class="scs-ko-fixture-round"><h4>'+esc(knockoutStageLabel(matches[0]))+'</h4>';
   matches.forEach(function(m){
@@ -940,7 +942,7 @@ function knockoutFixtureCards(onlyMatchId){
   });
   if(!onlyMatchId)html+='</section>';
  });
- return html+(onlyMatchId?'':'</section>');
+ return html+(onlyMatchId?'':'</details>');
 }
 async function changePatternSplit(side,value){
  if(readonly||!byeSelection)return false;
@@ -1755,6 +1757,7 @@ window.SCSTournament.eventScoringFormatChanged=eventScoringFormatChanged;
 window.SCSTournament.applyEventScoringRules=applyEventScoringRules;
 window.SCSTournament.changePatternSplit=changePatternSplit;
 window.SCSTournament.markTournamentCompleted=koMarkTournamentCompleted;
+window.SCSTournament.rememberMatchesExpanded=function(open,key){allMatchesExpanded.set(key||allMatchesKey(),!!open);};
 window.SCSTournament.generateCustomTwoSided=generateCustomTwoSided;
 window.SCSTournament.generateCustomTwoSidedFromWorker=generateCustomTwoSidedFromWorker;
 window.SCSTournament.switchTournamentTab=switchTournamentTab;
