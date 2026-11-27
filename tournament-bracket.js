@@ -1180,7 +1180,7 @@ function connectKoCourtPool(){if(!root||!draw||koHome||readonly)return;
  draw._scsCourtPoolEventId=event;draw._scsParentTournamentId=parentRef||parent._scsClientTournamentId||parent.id;
  SCSEventCourtPool.connect(root,{parent:()=>parent,eventId:event,format:parent._scsTournamentFormat||'knockout',state:()=>draw,onChange:async numbers=>{const target=draw;if(JSON.stringify(target.courtNumbers)===JSON.stringify(numbers)&&Number(target.numCourts)===numbers.length)return;target.courtNumbers=numbers;target.numCourts=numbers.length;if(window.SCSCourtCenter?.setCourtNumbers){const live=SCSCourtCenter.liveState();if(live.tournament&&sameSavedTournament(target,live.tournament))await SCSCourtCenter.setCourtNumbers(numbers,target);}if(draw!==target||koHome)return;await localTournamentSave(target);if(draw===target&&!koHome)render();}});
 }
-function updateKnockoutIdentity(){if(root&&draw&&!koHome){var eventId=draw._scsGroupEventId||draw._scsKoEventId||koActiveId||draw._scsClientTournamentId;window.ScsApi?.eventIdentity?.apply(root,koMain,eventId,ScsApi.eventIdentity.label(draw,koMain));}}
+function updateKnockoutIdentity(){if(root&&draw&&!koHome){var eventId=draw._scsGroupEventId||draw._scsKoEventId||koActiveId||draw._scsClientTournamentId;window.ScsApi?.eventIdentity?.apply(root,koMain,eventId,ScsApi.eventIdentity.label(draw,koMain),draw._scsGroupKnockoutStage);}}
 function organizeTournamentTabs(){
  updateKnockoutIdentity();
  connectKoCourtPool();
