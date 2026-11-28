@@ -28,7 +28,7 @@ async function koOpenHomeEvent(id,section){
  try{
   if(!item)throw Error('This event is no longer in the tournament. Refresh the tournament list.');
   if(item.format==='group'&&typeof window.SCSGroupTournament?.openMixedEvent!=='function')throw Error('The Group event module has not loaded. Reload the app and retry.');
-  if(item.format==='group'){const saved=koEventLoad(item.id),choice=await ScsApi.events.chooseEventStage(item,saved);if(choice===null){if(status)status.hidden=true;return;}SCSGroupTournament.setStageScope(choice,item.id);koOpenTournamentEvent(item.id,choice==='group'?(section||'main'):'stage-shell');if(choice!=='group'){await SCSGroupTournament.openEventStage(choice,section==='match'?'match':'draw');if(section==='main')SCSTournament.switchTournamentTab('main');}}else koOpenTournamentEvent(item.id,'main');
+  if(item.format==='group'){const saved=koEventLoad(item.id),choice=await ScsApi.events.chooseEventStage(item,saved);if(choice===null){if(status)status.hidden=true;return;}SCSGroupTournament.setStageScope(choice,item.id);koOpenTournamentEvent(item.id,choice==='group'?(section||(saved?.started?'flowchart':'main')):'stage-shell');if(choice!=='group'){await SCSGroupTournament.openEventStage(choice,section==='match'?'match':'draw');if(section==='main')SCSTournament.switchTournamentTab('main');}}else koOpenTournamentEvent(item.id,section||(koEventLoad(item.id)?.live?'flowchart':'main'));
   if(status)status.hidden=true;
  }catch(error){
   if(host)host.hidden=false;
@@ -1235,7 +1235,7 @@ function organizeTournamentTabs(){
  bar.querySelectorAll('[data-tm-nav]').forEach(function(btn){var key=btn.getAttribute('data-tm-nav');var found=tabs.find(function(t){return t[1]===key});if(found)btn.setAttribute('data-tm-tab',found[0]);});
  root.insertBefore(bar,root.firstChild);
  function panel(name,els){var wrap=document.createElement('section');wrap.className='scs-tm-tab-panel';wrap.setAttribute('data-tm-panel',name);root.appendChild(wrap);els.forEach(function(el){if(el)wrap.appendChild(el)});return wrap}
- {var overview=document.createElement('div');overview.innerHTML=ScsApi.events.overview({name:ScsApi.eventIdentity.label(draw,koMain),parent:koMain&&koMain.title||draw._scsParentTournamentTitle||'',format:'Knockout',sport:draw.sport||'',rules:eventScoringSummary()||(draw.pointsToWin?draw.pointsToWin+' points':''),teams:draw.entries.map(function(e){return e.name}),matches:draw.matches.map(function(m){return {status:draw.results&&draw.results[m.id]?'approved':'pending'}}),courts:draw.numCourts,status:draw.status});var schedule=overview.querySelector('[data-event-schedule]');if(schedule)schedule.innerHTML=eventScheduleControls();var eventPanel=panel('main',[overview]);if(summary){if(readonly)summary.remove();else{var settings=document.createElement('details');settings.className='scs-overview-card scs-event-settings';settings.innerHTML='<summary>Event settings</summary>'+eventScoringSettings();settings.appendChild(summary);overview.querySelector('.scs-event-overview').appendChild(settings)}}}
+ {var overview=document.createElement('div');overview.innerHTML=ScsApi.events.overview({name:ScsApi.eventIdentity.label(draw,koMain),parent:koMain&&koMain.title||draw._scsParentTournamentTitle||'',format:'Knockout',sport:draw.sport||'',rules:eventScoringSummary()||(draw.pointsToWin?draw.pointsToWin+' points':''),teams:draw.entries.map(function(e){return e.name}),matches:draw.matches.map(function(m){return {status:draw.results&&draw.results[m.id]?'approved':'pending'}}),courts:draw.numCourts,status:draw.status});var schedule=overview.querySelector('[data-event-schedule]');if(schedule)schedule.innerHTML=eventScheduleControls();var eventPanel=panel('main',[overview]);if(summary){if(readonly)summary.remove();else{var settings=document.createElement('details');settings.className='scs-overview-card scs-event-settings';settings.innerHTML='<summary>Event settings</summary>'+eventScoringSettings();settings.appendChild(summary);settings.open=!draw.live;overview.querySelector('.scs-event-overview').appendChild(settings)}}if(schedule)overview.querySelector('.scs-event-overview').appendChild(schedule);}
  // Knockout Teams uses the very same cards and metadata hydration as Assist Step 1.
  // Do not maintain a second, reduced roster layout.
  var playersPanel=document.createElement('div');
@@ -1800,7 +1800,7 @@ window.SCSTournament.openCourtScore=openCourtScore;
 window.SCSTournament.openParentEvent=function(parent,event,state,onSaveParent,onHome){
  mixedParentContext={onSaveParent:onSaveParent,onHome:onHome};viewerMode=false;readonly=false;koMain=JSON.parse(JSON.stringify(parent));koActiveId=event.id;
  root=document.getElementById('scsTournamentOverlay');root.hidden=false;groupChildMode=false;
- if(state)localStorage.setItem(koEventKey(event.id),JSON.stringify(state));koOpenEvent(event.id,'players');
+ if(state)localStorage.setItem(koEventKey(event.id),JSON.stringify(state));koOpenEvent(event.id,state?.live?'flowchart':'main');
 };
 window.SCSTournament.addKnockoutEvent=koAddEvent;
 window.SCSTournament.renameKnockout=koRename;
