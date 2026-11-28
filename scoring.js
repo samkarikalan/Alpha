@@ -128,7 +128,13 @@ async function openPicker(){
   try{
     try{clubPlayers=normalizePlayers(typeof dbGetPlayers==='function'&&(window.SCSSportContext?.appModule!=='scoreboard'||getMyClub()?.id)?await dbGetPlayers(false):[]);}catch(_){clubPlayers=[];}
     var sessions=typeof dbGetLiveSessions==='function'?await dbGetLiveSessions({strict:true}):[];
-    var pickerLocalTournament=null;if(window.SCSCourtCenter?.tournamentSessionViews){var storedLocal=SCSCourtCenter.localSession?.(),sourceCount=sessions.length,views=SCSCourtCenter.tournamentSessionViews(storedLocal?sessions.concat([storedLocal]):sessions);sessions=views.slice(0,sourceCount);pickerLocalTournament=storedLocal?views[sourceCount]:null;}
+    var currentLocalTournament=window.SCSCourtCenter?.localSession?.();
+    if(window.SCSSportContext?.appModule==='scoreboard'){
+      if(!window.SCSTournamentScores?.filterCurrentSessions)throw Error('Tournament assignment validation is unavailable. Reload the app.');
+      var currentViews=await SCSTournamentScores.filterCurrentSessions(currentLocalTournament?sessions.concat([currentLocalTournament]):sessions);
+      var localId=currentLocalTournament?.id;currentLocalTournament=localId?currentViews.find(s=>s.id===localId)||null:null;sessions=localId?currentViews.filter(s=>s.id!==localId):currentViews;
+    }
+    var pickerLocalTournament=null;if(window.SCSCourtCenter?.tournamentSessionViews){var storedLocal=currentLocalTournament,sourceCount=sessions.length,views=SCSCourtCenter.tournamentSessionViews(storedLocal?sessions.concat([storedLocal]):sessions);sessions=views.slice(0,sourceCount);pickerLocalTournament=storedLocal?views[sourceCount]:null;}
     var matches=[];
     (sessions||[]).forEach(function(sess){var rounds=sess.rounds_data||[];if(!rounds.length)return;var round=rounds[rounds.length-1];(round.games||[]).forEach(function(g,gi){
       var winnerOn = g.winnerEnabled===true || round.winnerEnabled===true;
