@@ -304,6 +304,7 @@ async function confirmTournamentResult(m,payload,winner){
 }
 async function retryTournamentHistory(score){
  const source=score?.tournamentSource,club=getMyClub();if(!score?.finished||!Array.isArray(source)||!club?.id)throw Error('Select the original match club before sending.');
+ const approvals=await SCSTournamentScores.historyApprovals([score]);if(approvals.get(JSON.stringify(source)))return {approved:true};
  const names=score.names||[],pairs=[names.slice(0,2),names.slice(2,4)],winner=score.setWins?.[0]>score.setWins?.[1]?'L':'R';let match;
  if(source[0]==='cloud-tournament'){
   const list=await SCSTournamentScores.list();match=list.find(m=>String(m.remoteTournament?.id)===String(source[1])&&String(m.remoteTournament?.matchId)===String(source[2]));

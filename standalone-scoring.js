@@ -95,6 +95,8 @@ async function renderHistory(list,onView,isCurrent){
  rows=rows.filter(function(r){return r.clubId===selectedClub;}).sort(function(a,b){return b.createdAt.localeCompare(a.createdAt);});
  if(!rows.length){list.innerHTML='<p class="scs-score-picker-empty">No saved matches on this device.</p>';return;}
  list.innerHTML='';
+ let approvals=new Map();try{approvals=await window.SCSTournamentScores?.historyApprovals(rows.map(r=>r.score))||approvals;}catch(_){}
+ if(isCurrent&&!isCurrent())return;
  rows.forEach(function(r){
   var score=r.score,n=score.names||[],sets=score.completedSets||[],wins=score.setWins||[0,0],winner=wins[0]>wins[1]?'left':'right';
   var summary=sets.map(function(x){return (x.score||[]).join('–');}).join(' | ');
@@ -109,11 +111,11 @@ async function renderHistory(list,onView,isCurrent){
    card.innerHTML='<small>'+(score.sport==='pickleball'?'Pickleball':'Badminton')+'</small><strong>'+escape(n.slice(0,2).join(' / '))+' vs '+escape(n.slice(2,4).join(' / '))+'</strong><p>'+escape(summary)+'</p><button type="button">View Score</button>';
    card.querySelector('button').addEventListener('click',function(){view(score);});
   }
-  if(score.tournamentMatch&&score.tournamentSource&&score.tournamentDelivery!=='sent'){
-   const retry=document.createElement('button');retry.type='button';retry.className='scs-score-start-btn';retry.textContent='Retry tournament sync';
-   const message=document.createElement('p');message.setAttribute('role','status');message.textContent='Saved on this device · Server delivery not confirmed';
-   retry.onclick=async()=>{retry.disabled=true;message.textContent='Sending saved result…';try{await SCSScoring.retryTournamentHistory(score);message.textContent='Sent to tournament · Awaiting approval';retry.remove();}catch(error){message.textContent=error.message;retry.disabled=false;}};
-   card.append(message,retry);
+  if(score.tournamentMatch&&score.tournamentSource){
+   const retry=document.createElement('button');retry.type='button';retry.className='scs-score-start-btn';retry.textContent='Submit again';
+   const message=document.createElement('p');message.setAttribute('role','status');const approved=approvals.get(JSON.stringify(score.tournamentSource));message.textContent=approved?'Approved by tournament':score.tournamentDelivery==='sent'?'Sent to tournament · Awaiting approval':'Saved on this device · Submit to tournament';
+   retry.onclick=async()=>{retry.disabled=true;message.textContent='Sending saved result…';try{const result=await SCSScoring.retryTournamentHistory(score);message.textContent=result?.approved?'Approved by tournament · Result unchanged':'Sent to tournament · Awaiting approval';if(result?.approved)retry.remove();else retry.disabled=false;}catch(error){message.textContent=error.message;retry.disabled=false;}};
+   card.append(message);if(!approved)card.append(retry);
   }
   list.appendChild(card);
  });

@@ -1835,6 +1835,7 @@ async function dbUpdateLiveMatchScore(sessionId, roundNumber, courtNumber, pair1
     const game = (ccid ? games.find(g => String(g.ccid || '') === String(ccid)) : null) ||
       games.find(g => Number(g.court || 0) === Number(courtNumber || 0) && samePair(g.pair1,pair1) && samePair(g.pair2,pair2));
     if (!game) { console.warn('dbUpdateLiveMatchScore: match not found', { sessionId, roundNumber, courtNumber, ccid, pair1, pair2 }); return false; }
+    if(game.court_center_status==='approved')return false;
     game.score = scoreData || null;
     game.score_status = winnerSide ? 'scored' : 'scoring';
     if (winnerSide) game.winner = winnerSide;
