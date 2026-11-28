@@ -76,6 +76,9 @@ function waitingContent(items,ordered){
   return '<section class="scs-tm-group-fixtures scs-tm-group-tone-'+(Number(g.key)%8)+'"><h4>'+esc(g.title)+' <span>'+g.items.length+' matches</span></h4><div class="scs-tm-group-fixtures-list">'+g.items.map(x=>waiting({...x,heading:''})).join('')+'</div></section>';
  }).join('');
 }
+const assignmentExpanded=new Map();
+function rememberAssignmentExpanded(key,open){assignmentExpanded.set(String(key),!!open);}
+function assignmentDisclosure(body,count,key){return '<details class="scs-assignment-disclosure" data-assignment-disclosure="'+esc(key)+'" '+(assignmentExpanded.get(String(key))?'open ':'')+'ontoggle="if(this.isConnected)SCSSharedMatchCenter.rememberAssignmentExpanded(this.dataset.assignmentDisclosure,this.open)"><summary onclick="SCSSharedMatchCenter.rememberAssignmentExpanded(this.parentElement.dataset.assignmentDisclosure,!this.parentElement.open)"><span>To be assigned</span><b>'+count+'</b></summary><div class="scs-assignment-disclosure-body">'+(body||'<p class="scs-tm-live-empty">No matches in this category.</p>')+'</div></details>';}
 function panel(o){
  if(o.matchCards){o={...o,courts:(o.courts||[]).map(x=>({...x,matchCards:true,eventTitle:o.eventTitle})),waiting:(o.waiting||[]).map(x=>typeof x==='string'?x:{...x,matchCards:true,eventTitle:o.eventTitle}),underApproval:(o.underApproval||[]).map(x=>({...x,matchCards:true,matchStatus:'approval',eventTitle:o.eventTitle})),completed:(o.completed||[]).map(x=>({...x,matchCards:true,matchStatus:'finished',eventTitle:o.eventTitle}))};}
  const items=o.courts||[],numbers=Array.isArray(o.courtNumbers)?o.courtNumbers:items.length?items.map(c=>c.number):Array.from({length:Math.max(0,Number(o.courtCount)||0)},(_,i)=>i+1),count=numbers.length,wait=o.waiting||[],review=o.underApproval||[],done=o.completed||[];
@@ -94,11 +97,11 @@ function panel(o){
   return '<section class="scs-tm-live-center"><section class="scs-assignment-control-card"><div class="scs-tm-live-center-head"><div><h3>Event courts</h3><p>Shared across this event’s stages</p></div><div class="scs-tm-court-picker scs-tm-live-count">'+btn('−',attrs.change(-1))+'<b>'+count+'</b>'+btn('+',attrs.change(1))+'</div></div></section>'+chooser+
    '<section data-unified-event-courts><h3>Courts · '+count+'</h3>'+numbers.map(n=>{const item=items.find(c=>Number(c.number)===Number(n))||{number:n};return '<section class="scs-unified-court-slot" data-unified-court="'+n+'" data-current-match="'+!!item.match+'"><h4>Court '+esc(n)+'</h4>'+court(item)+'</section>';}).join('')+'</section>'+
    (remainingReview.length?section('Submitted results without a court',remainingReview.map(completed).join(''),remainingReview.length):'')+
-   section('To be assigned',waitingContent(visibleWait,o.orderedWaiting),visibleWait.length)+'</section>';
+   assignmentDisclosure(waitingContent(visibleWait,o.orderedWaiting),visibleWait.length,o.assignmentKey||o.eventTitle||'event')+'</section>';
  }
  const shell='<section class="scs-tm-live-center"><div class="scs-tm-live-center-head"><div><small>LIVE TOURNAMENT</small><h3>Courts &amp; Match Assignment</h3></div><div class="scs-tm-court-picker scs-tm-live-count">'+btn('−',attrs.change(-1))+'<b>'+count+'</b>'+btn('+',attrs.change(1))+'</div></div><div class="scs-tm-live-courts">'+numbers.map(n=>{const c=items.find(x=>x.number===n);return court(c||{number:n})}).join('')+'</div>'+chooser;
  if(o.upcomingOnly)return shell+'<details class="scs-tm-upcoming" open><summary><span>Upcoming</span><b>'+wait.length+'</b></summary><div class="scs-tm-upcoming-content">'+(waitingContent(wait,o.orderedWaiting)||'<div class="scs-tm-live-empty">No upcoming matches.</div>')+'</div></details></section>';
  return shell+'<div class="scs-tm-live-tabs">'+tabs.map(([id,label,n])=>btn(label+(n===null?'':' <b>'+n+'</b>'),n===0?'disabled aria-disabled="true" style="opacity:.38;cursor:not-allowed;pointer-events:none"':attrs.tab(id),(current===id?'active ':'')+(n===0?'scs-tm-tab-disabled':''))).join('')+'</div>'+(current==='ranking'?(o.ranking||'<div class="scs-tm-live-empty">Ranking updates from approved results.</div>'):current==='approval'?(review.map(completed).join('')||'<div class="scs-tm-live-empty">No matches awaiting approval.</div>'):current==='completed'?(done.map(completed).join('')||'<div class="scs-tm-live-empty">No approved matches yet.</div>'):(waitingContent(wait,o.orderedWaiting)||'<div class="scs-tm-live-empty">No matches awaiting play.</div>'))+'</section>';
 }
-window.SCSSharedMatchCenter={matchCard,knockoutStage,cardScore,court,waiting,completed,panel,playerIdentity};
+window.SCSSharedMatchCenter={rememberAssignmentExpanded,assignmentDisclosure,matchCard,knockoutStage,cardScore,court,waiting,completed,panel,playerIdentity};
 })();
