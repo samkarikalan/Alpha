@@ -16,13 +16,14 @@ async function save(score){if(!score||!score.finished)throw Error('Match not com
  var record={id:crypto.randomUUID(),clubId:clubId(),createdAt:new Date().toISOString(),score:score};
  await transact('readwrite',function(s){return s.put(record);});return record;
 }
-async function saveTournament(score,match){
+async function saveTournament(score,match,delivery){
  if(!score?.finished||!match)throw Error('Match not completed');
  const ref=match.remoteTournament;
  const source=ref?['cloud-tournament',ref.id,ref.matchId]:[match.sessionId,match.groupId||match.game?.ccid||match.game?.tournament_match||match.matchNo||'',match.round||1];
  const club=ref?.clubId||clubId();
  const id='tournament:'+JSON.stringify([club,source,match.pair1||[],match.pair2||[]]);
- const record={id,clubId:club,createdAt:new Date().toISOString(),score:Object.assign({},score,{matchTitle:match.matchNo||'Tournament match',tournamentMatch:true,tournamentSource:source})};
+ const previous=await transact('readonly',s=>s.get(id));
+ const record={id,clubId:club,createdAt:previous?.createdAt||new Date().toISOString(),score:Object.assign({},score,{matchTitle:match.matchNo||'Tournament match',tournamentMatch:true,tournamentSource:source,tournamentDelivery:delivery||'pending'})};
  await transact('readwrite',s=>s.put(record));return record;
 }
 function escape(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -107,6 +108,12 @@ async function renderHistory(list,onView,isCurrent){
    card.className='scs-score-live-match';
    card.innerHTML='<small>'+(score.sport==='pickleball'?'Pickleball':'Badminton')+'</small><strong>'+escape(n.slice(0,2).join(' / '))+' vs '+escape(n.slice(2,4).join(' / '))+'</strong><p>'+escape(summary)+'</p><button type="button">View Score</button>';
    card.querySelector('button').addEventListener('click',function(){view(score);});
+  }
+  if(score.tournamentMatch&&score.tournamentSource&&score.tournamentDelivery!=='sent'){
+   const retry=document.createElement('button');retry.type='button';retry.className='scs-score-start-btn';retry.textContent='Retry tournament sync';
+   const message=document.createElement('p');message.setAttribute('role','status');message.textContent='Saved on this device · Server delivery not confirmed';
+   retry.onclick=async()=>{retry.disabled=true;message.textContent='Sending saved result…';try{await SCSScoring.retryTournamentHistory(score);message.textContent='Sent to tournament · Awaiting approval';retry.remove();}catch(error){message.textContent=error.message;retry.disabled=false;}};
+   card.append(message,retry);
   }
   list.appendChild(card);
  });

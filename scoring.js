@@ -289,6 +289,36 @@ function queueLiveScore(m,payload,winner){
  });
 }
 function syncLiveScore(winner){return liveMatch?queueLiveScore(liveMatch,scorePayload(),winner):Promise.resolve(false);}
+async function confirmTournamentResult(m,payload,winner){
+ const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
+ const sameScore=v=>JSON.stringify(canonical(v))===JSON.stringify(canonical(payload));
+ if(!window.SCSTournamentLocal?.confirmRecord)return;
+ if(m.remoteTournament){
+  const row=await SCSTournamentLocal.confirmRecord('tournaments',m.remoteTournament.id),matches=row.format==='team'?(row.state.encounters||[]).flatMap(e=>e.matches||[]):row.state.matches||[];
+  const game=matches.find(g=>String(g.id)===String(m.remoteTournament.matchId));
+  if(!game||game.winner!==winner||!sameScore(game.score))throw Error('The server has not confirmed this result. Retry sending.');
+ }else if(m.tournament&&!String(m.sessionId).startsWith('local-')){
+  const row=await SCSTournamentLocal.confirmRecord('sessions',m.sessionId),game=(row.rounds_data||[]).flatMap(r=>r.games||[]).find(g=>m.game?.ccid?g.ccid===m.game.ccid:String(g.tournament_match)===String(m.game?.tournament_match));
+  if(!game||game.winner!==winner||!sameScore(game.score))throw Error('The server has not confirmed this result. Retry sending.');
+ }
+}
+async function retryTournamentHistory(score){
+ const source=score?.tournamentSource,club=getMyClub();if(!score?.finished||!Array.isArray(source)||!club?.id)throw Error('Select the original match club before sending.');
+ const names=score.names||[],pairs=[names.slice(0,2),names.slice(2,4)],winner=score.setWins?.[0]>score.setWins?.[1]?'L':'R';let match;
+ if(source[0]==='cloud-tournament'){
+  const list=await SCSTournamentScores.list();match=list.find(m=>String(m.remoteTournament?.id)===String(source[1])&&String(m.remoteTournament?.matchId)===String(source[2]));
+ }else if(!String(source[0]).startsWith('local-')){
+  const rows=await sbGet('sessions','id=eq.'+encodeURIComponent(source[0])+'&club_id=eq.'+encodeURIComponent(club.id)+'&select=id,club_id,status,rounds_data,updated_at,started_by');
+  const views=await SCSTournamentScores.filterCurrentSessions(rows);
+  for(const row of views)for(const round of row.rounds_data||[]){const game=(round.games||[]).find(g=>String(g.ccid||g.tournament_match)===String(source[1]));if(game)match={sessionId:row.id,round:round.round,court:game.court,pair1:game.pair1,pair2:game.pair2,game,tournament:true,matchNo:score.matchTitle};}
+ }
+ if(getMyClub()?.id!==club.id)throw Error('The selected club changed. Return to the match club and retry.');
+ if(!match||JSON.stringify([match.pair1,match.pair2])!==JSON.stringify(pairs))throw Error('This saved result no longer matches a current tournament assignment. No result was changed.');
+ const payload={...score};for(const field of ['matchTitle','tournamentMatch','tournamentSource','tournamentDelivery'])delete payload[field];
+ if(!await queueLiveScore(match,payload,winner))throw Error('Result remains saved on this device. Could not send it; retry when connected.');
+ await confirmTournamentResult(match,payload,winner);
+ await SCSStandalone.saveTournament(payload,match,'sent');return true;
+}
 async function sendResult(){
  if(standaloneMode){
   if(!state||!state.finished||readOnly)return;
@@ -323,6 +353,8 @@ async function sendResult(){
   }
   var ok=await queueLiveScore(m,payload,winner);
   if(!ok)throw Error('Could not save result to the server. Please try again.');
+  await confirmTournamentResult(m,payload,winner);
+  if(m.tournament||m.remoteTournament)await SCSStandalone.saveTournament(payload,m,'sent');
   if(liveMatch===m)close();
  }catch(error){
   if(liveMatch===m){if(btn){btn.disabled=false;btn.textContent='Save & Close';}setSetupMsg(error.message);alert(error.message);}
@@ -426,5 +458,5 @@ send.hidden=false;
 send.disabled=false;
 send.onclick=canSave?sendResult:close;
 send.textContent=canSave?'Save & Close':'Close';}if(autoScroll&&state.entries.length&&(!pickleball()||el('scsScoreRallyHistory').open)){requestAnimationFrame(function(){var w=el('scsScoreTableWrap'),cells=w.querySelectorAll('thead th'),target=cells[state.entries.length+1];if(target)target.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});});}}
-window.SCSScoring={openRuleEditor:openRuleEditor,applyRuleOverride:applyRuleOverride,workspace:function(){return scoringWorkspace;},open:open,openHistory:openHistory,selectTab:selectPickerTab,newStandalone:newStandalone,refresh:function(){if(!el('scsScoreMatchPicker').hidden)return openPicker();},openStandalone:openStandalone,openStandaloneHistory:openStandaloneHistory,openConduct:openConduct,openGroupMatch:openGroupMatch,openCompleted:openCompleted,openTeamCompleted:openTeamCompleted,openEditableCompleted:openEditableCompleted,editSavedSet:editSavedSet,selectCompletedSet:selectCompletedSet,close:close,start:start,refreshSetupNames:refreshSetupNames,playerChanged:playerChanged,setInitialRole:setInitialRole,addPoint:addPoint,undo:undo,swapButtons:swapButtons,matchFormatChanged:matchFormatChanged,sendResult:sendResult};
+window.SCSScoring={openRuleEditor:openRuleEditor,applyRuleOverride:applyRuleOverride,workspace:function(){return scoringWorkspace;},open:open,openHistory:openHistory,selectTab:selectPickerTab,newStandalone:newStandalone,refresh:function(){if(!el('scsScoreMatchPicker').hidden)return openPicker();},openStandalone:openStandalone,openStandaloneHistory:openStandaloneHistory,openConduct:openConduct,openGroupMatch:openGroupMatch,openCompleted:openCompleted,openTeamCompleted:openTeamCompleted,openEditableCompleted:openEditableCompleted,editSavedSet:editSavedSet,selectCompletedSet:selectCompletedSet,close:close,start:start,refreshSetupNames:refreshSetupNames,playerChanged:playerChanged,setInitialRole:setInitialRole,addPoint:addPoint,undo:undo,swapButtons:swapButtons,matchFormatChanged:matchFormatChanged,sendResult:sendResult,retryTournamentHistory:retryTournamentHistory};
 })();
