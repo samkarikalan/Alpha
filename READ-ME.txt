@@ -1,29 +1,17 @@
-Shared match lifecycle — consolidated app update
+Start Event feedback and bounded requests — consolidated app update
 
-Upload these seven files to the existing app root:
-- court-center.js
-- tournament-local.js
-- tournament-score-sync.js
-- scoring.js
-- group-tournament.js
-- team-tournament.js
-- sw.js
+Upload the ten JavaScript files in this ZIP to the existing app root. Keep the included contract/source instructions with the project. Reopen/update Tournament and Scoreboard. No Supabase SQL or Worker deployment is required if the compact match-sync Worker is already installed.
 
-Keep AGENTS.md and MATCH-LIFECYCLE.md with the project source. They record the permanent match rules and required regression coverage.
+This bundle includes the prior shared match lifecycle changes so you do not need to stack the earlier app patches.
 
-Reopen/update both Tournament and Scoreboard on every device. This replaces the earlier submission-confirmation and approval app patches. Do not clear site/app data.
+Start Event now:
+- Shows Starting event and a visible progress message while working.
+- Prevents duplicate clicks and restores the button after a failure/cancellation.
+- Shows setup/court errors inline instead of only returning silently or leaving an unhandled error.
+- Bounds tournament engine and court allocation HTTP requests to 15 seconds.
+- Bounds Knockout's existing court-session lookup; an unconfirmed lookup cannot silently create a duplicate session.
+- Commits a Group event's local save before displaying the started state. Standings are not a prerequisite for starting.
 
-No new Supabase SQL or Worker deployment is needed when using the compact match-sync Worker already deployed in this conversation. The database/Worker already enforce assigned matches, exact players, organizer-only approval, revision checks and immutable approved results. This update makes all app entry paths follow those same rules. If the compact endpoint is missing/unavailable, tournament scoring/approval now gives a clear error instead of using an unconfirmed local match.
+A failed server prerequisite will still prevent start and will now show its actual error. This patch does not clear or delete the 13 pending records shown in your sync panel, and it does not claim to identify the exact failed request from the screenshot. Keep those local records and export a backup for queue diagnosis.
 
-The rules:
-1. Assignment, score, finished result and approval intent are saved durably on the device before transmission. Offline work stays queued.
-2. Group, Team and Knockout scoring, including scoring inside Tournament on the same device, must resolve the match from the server. A local-only assignment cannot start scoring. During play, points can be recorded locally offline and retried. Save & Close durably saves the finished result and sends it again.
-3. Sent/Awaiting approval requires a server receipt for the finished score and winner. Organizer approval checks and updates the single server match independently of unrelated pending settings/session jobs. The organizer uses the server's score/winner, not a stale local copy.
-4. Approved matches disappear from scoring lists. An open scoreboard locks when it learns of approval. The server rejects edits even from a stale or offline device. Pending rejected local work is retained for review.
-
-Statuses: assigned -> playing -> submitted -> approved.
-Local pending is a device delivery state; it is never treated as a server match status.
-
-Verification: all five suites in match-sync/tests passed using pinned dependencies and isolated PostgreSQL/browser fixtures: schema/state transitions, actual Worker auth/routing, server-first/two-context lifecycle, actual Court Center approval with pending setup, and actual scoring UI local-save/server-receipt behavior. No real tournament result was changed during these tests.
-
-App/Worker files were not deployed automatically here. Upload this app update to activate the unified entry paths. This change reduces reliance on session snapshots; it is not a claim that every network error or slow connection is eliminated.
+Tests passed: actual Group Start Event working state/local success; a stalled fixture endpoint produces a timeout and retry state without marking the event started; Knockout court-start failure produces an inline error and restores the button. All five existing match lifecycle suites also passed. Tests use isolated fixtures and mock endpoints; no real tournament data was changed.

@@ -366,7 +366,18 @@ function editor(id){if(viewOnly)return false;
  modal.onclick=e=>{if(e.target===modal)modal.remove()};
 }
 let startingEvent=false;
-async function startTournament(){if(viewOnly||started||startingEvent)return false;if(!SCSEventCourtPool.ready(el()))return false;const issues=groupEventSetupIssues();if(issues.length){alert('Complete Event setup: '+issues.join(' '));return false;}startingEvent=true;const button=el()?.querySelector('[data-start]');if(button)button.disabled=true;try{return await startGroupEventRun()}finally{startingEvent=false;if(button?.isConnected)button.disabled=false}}
+function groupStartStatus(text){let node=el()?.querySelector('[data-event-start-status]');if(!node){node=document.createElement('p');node.dataset.eventStartStatus='';node.setAttribute('role','status');el()?.querySelector('[data-start]')?.after(node);}if(node)node.textContent=text;}
+async function startTournament(){
+ if(viewOnly){groupStartStatus('Organiser access is required to start this event.');return false;}
+ if(started){groupStartStatus('This event is already started. Open Assign & Approve.');return false;}
+ if(startingEvent)return false;
+ if(!SCSEventCourtPool.ready(el())){groupStartStatus('Court allocation is not ready. Check Sync or refresh the event courts, then retry.');return false;}
+ const issues=groupEventSetupIssues();if(issues.length){groupStartStatus('Complete Event setup: '+issues.join(' '));return false;}
+ startingEvent=true;const button=el()?.querySelector('[data-start]'),caption=button?.textContent;if(button){button.disabled=true;button.textContent='Starting event…';button.setAttribute('aria-busy','true');}groupStartStatus('Creating fixtures… Your saved setup is retained.');
+ try{const result=await startGroupEventRun();if(!result)groupStartStatus('Event was not started. Review the message or confirm Start Event, then retry.');return result;}
+ catch(error){groupStartStatus(error.message||'Could not start this event. Your saved setup is retained. Retry.');return false;}
+ finally{startingEvent=false;if(button?.isConnected){button.disabled=false;button.textContent=caption;button.removeAttribute('aria-busy');}}
+}
 async function startGroupEventRun(){if(viewOnly)return false;
  if(!created||!assistComplete(2)||!assistComplete(3)){alert('Complete and confirm event setup first.');return false}
  if(started)return;
@@ -377,10 +388,10 @@ async function startGroupEventRun(){if(viewOnly)return false;
   const generated=await SCSTournamentEngine.run('group-fixtures',{config,assignments});
   if(!Array.isArray(generated.matches)||!generated.matches.length)throw Error('No fixtures were generated.');matches=generated.matches;
  }catch(error){
-  {alert(error.message||'Could not generate group fixtures.');return}
+  throw error;
  }
- assignmentSerial=0;workerGroupStandings=Object.create(null);await refreshWorkerGroupStandings(false);
- started=true;assistMode=false;assistStep=0;tab='event';save();render();return true;
+ assignmentSerial=0;workerGroupStandings=Object.create(null);
+ started=true;assistMode=false;assistStep=0;tab='event';save();if(window.SCSTournamentLocal)await SCSTournamentLocal.settled();render();return true;
 }
 function groupCourtIds(){return SCSEventCourtPool.ids({courtCount,courtNumbers:eventCourtNumbers});}
 function teamBusy(team){return matches.some(m=>['assigned','playing','score_ready'].includes(m.status)&&(m.a===team||m.b===team))}

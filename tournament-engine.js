@@ -12,8 +12,10 @@
     var user = typeof authGetUser === 'function' ? authGetUser() : null;
     var token = typeof _getLocalToken === 'function' ? _getLocalToken() : null;
     if (!user || !user.id || !token) throw new Error('Sign in again to use the tournament engine.');
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+    try{
     var response = await fetch(WORKER_URL + '/tournament/engine', {
-      method: 'POST',
+      method: 'POST',signal:controller.signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: action,
@@ -31,6 +33,7 @@
     const k=responseKey;memory.set(k,data);
     if(['group-standings','team-standings','group-qualifiers'].includes(action)){try{localStorage.setItem('scs_official_'+action,JSON.stringify({key:k,data}));}catch(_){}}
     return data;
+    }catch(error){if(error.name==='AbortError')throw Error('Tournament service timed out. Your saved setup is retained. Please retry.');throw error;}finally{clearTimeout(timeout);}
   }
 
   window.SCSTournamentEngine = Object.freeze({ run: run, cached:cached, ensure:ensure });

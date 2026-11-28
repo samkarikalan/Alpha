@@ -998,7 +998,8 @@ function setTournamentCourts(delta){if(readonly)return false;if(root?._scsEventC
  localTournamentSave(draw);
 }
 var eventStarting=false;
-async function startSavedTournament(){if(eventStarting)return false;if(!SCSEventCourtPool.ready(root))return false;var issues=knockoutEventSetupIssues();if(issues.length){alert('Complete Event setup: '+issues.join(' '));return false;}eventStarting=true;var button=root&&root.querySelector('[data-event-start]');if(button)button.disabled=true;try{return await startSavedTournamentRun()}finally{eventStarting=false;if(button&&button.isConnected)button.disabled=false}}
+function knockoutStartStatus(text){var node=root&&root.querySelector('[data-event-start-status]');if(!node&&root){node=document.createElement('p');node.dataset.eventStartStatus='';node.setAttribute('role','status');root.querySelector('[data-event-start]')?.after(node);}if(node)node.textContent=text;}
+async function startSavedTournament(){if(eventStarting)return false;if(!SCSEventCourtPool.ready(root)){knockoutStartStatus('Court allocation is not ready. Check Sync or refresh courts, then retry.');return false;}var issues=knockoutEventSetupIssues();if(issues.length){knockoutStartStatus('Complete Event setup: '+issues.join(' '));return false;}eventStarting=true;var button=root&&root.querySelector('[data-event-start]'),caption=button?.textContent;if(button){button.disabled=true;button.textContent='Starting event…';button.setAttribute('aria-busy','true');}knockoutStartStatus('Preparing event courts… Your saved setup is retained.');try{return await startSavedTournamentRun()}catch(error){knockoutStartStatus(error.message||'Could not start this event. Retry.');return false;}finally{eventStarting=false;if(button&&button.isConnected){button.disabled=false;button.textContent=caption;button.removeAttribute('aria-busy');}}}
 async function startSavedTournamentRun(){if(readonly)return false;
  if(tournamentStarted()){render();return}
  if(!koFixturesReady()){alert('Generate fixtures before starting the tournament.');return}
@@ -1008,7 +1009,7 @@ async function startSavedTournamentRun(){if(readonly)return false;
   draw.numCourts=Math.max(1,Math.min(20,Number(draw.numCourts)||2));
   // Start the Court Center first. Only a successful start marks this event live.
   await SCSCourtCenter.startTournament(draw,draw.numCourts);
- }catch(e){draw.live=previousLive;draw.livePage=previousLivePage;alert(e.message||'Could not start the live tournament.');return}
+ }catch(e){draw.live=previousLive;draw.livePage=previousLivePage;knockoutStartStatus(e.message||'Could not start the live tournament. Retry.');return false}
  draw.live=true;draw.livePage=true;
  draw.startedAt=previousStartedAt||new Date().toISOString();
  // Preserve this event's own cloud identity. A format-wide ID can point to
