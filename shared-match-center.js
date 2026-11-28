@@ -95,7 +95,7 @@ function panel(o){
   const remainingReview=review.filter(m=>!represented.has(identity(m.leftPlayers,m.rightPlayers)));
   const section=(title,body,n)=>'<section class="scs-event-match-section"><h3>'+title+' · '+n+'</h3>'+(body||'<p class="scs-tm-live-empty">No matches in this category.</p>')+'</section>';
   return '<section class="scs-tm-live-center"><section class="scs-assignment-control-card"><div class="scs-tm-live-center-head"><div><h3>Event courts</h3><p>Shared across this event’s stages</p></div><div class="scs-tm-court-picker scs-tm-live-count">'+btn('−',attrs.change(-1))+'<b>'+count+'</b>'+btn('+',attrs.change(1))+'</div></div></section>'+chooser+
-   '<section data-unified-event-courts><h3>Courts · '+count+'</h3>'+numbers.map(n=>{const item=items.find(c=>Number(c.number)===Number(n))||{number:n};return '<section class="scs-unified-court-slot" data-unified-court="'+n+'" data-current-match="'+!!item.match+'"><h4>Court '+esc(n)+'</h4>'+court(item)+'</section>';}).join('')+'</section>'+
+   '<section data-unified-event-courts><h3>Courts · '+count+'</h3>'+numbers.map(n=>{const item=items.find(c=>Number(c.number)===Number(n))||{number:n};return '<section class="scs-unified-court-slot" data-unified-court="'+n+'" data-current-match="'+!!item.match+'">'+(item.match?'<h4>Court '+esc(n)+'</h4>':'')+court(item)+'</section>';}).join('')+'</section>'+
    (remainingReview.length?section('Submitted results without a court',remainingReview.map(completed).join(''),remainingReview.length):'')+
    assignmentDisclosure(waitingContent(visibleWait,o.orderedWaiting),visibleWait.length,o.assignmentKey||o.eventTitle||'event')+'</section>';
  }

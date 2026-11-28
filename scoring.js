@@ -212,6 +212,15 @@ function applyMatchEventRules(){
 }
 async function selectLiveMatch(m){const ref=m.remoteTournament?{tournamentId:m.remoteTournament.id,matchKey:m.remoteTournament.matchId}:m.passwordRef;if(ref?.tournamentId&&window.SCSMatchPasswords){try{if(!await SCSMatchPasswords.authorize(ref.tournamentId,ref.matchKey))return;}catch(error){alert(error.message||'Could not verify match scoring access.');return;}}var oldRuleEditor=el('scsScoreRuleEditor');if(oldRuleEditor)oldRuleEditor.remove();var oldRuleButton=el('scsScoreEditRules');if(oldRuleButton)oldRuleButton.hidden=true;readOnly=false;readOnlySet=0;teamEditMatchId=null;savedScoreEditor=null;var actions=document.querySelector('.scs-score-side-actions'),controls=document.querySelector('.scs-score-controls');if(actions)actions.hidden=false;if(controls)controls.hidden=false;liveMatch=m;setupSport=m.game&&m.game.score?(m.game.score.sport||'badminton'):(m.game&&m.game.sport||m.sport||preferredSport());configureSport(setupSport,true);el('scsScoreMatchPicker').hidden=true;el('scsScoreSetup').hidden=false;el('scsScoreSetup').classList.add('scs-live-match-setup');var all=(m.pair1||[]).concat(m.pair2||[]);clubPlayers=all.map(function(n,i){return{id:'live-'+i,name:n};});populatePlayerSelects();playerSelects().forEach(function(sel,i){sel.value='live-'+i;sel.disabled=true;});updateDuplicateOptions();var h=el('scsScoreSetup').querySelector('h2'),p=el('scsScoreSetup').querySelector('p');if(h)h.textContent=(m.courtCenter?'Court Center':'Round '+m.round)+' · Court '+m.court;if(p)p.textContent=m.pair1.join(' / ')+' vs '+m.pair2.join(' / ');var fmt=el('scsScoreFormatDetails');if(fmt){fmt.open=false;var scored=!!(m.game&&(m.game.score||m.game.scoreboard||m.game.completedSets||m.game.currentScore||m.game.finished||m.game.status==='under_approval'));fmt.classList.toggle('is-locked',scored);fmt.querySelectorAll('input').forEach(function(x){x.disabled=scored;});}showScoreConfig(true,fmt&&fmt.classList.contains('is-locked'));applyMatchEventRules();setSetupMsg('');}
 
+var scorePreviewSurface=null;
+function previewSurface(show){
+ const overlay=el('scsScoringOverlay');if(!overlay)return;
+ const values={position:'fixed',left:'0px',right:'0px',bottom:'0px',height:'auto',margin:'0px',background:'#071b32','background-image':'none',opacity:'1','z-index':'2147483646','padding-top':'12px','box-sizing':'border-box'};
+ if(show){let top=0;for(const id of ['scsTournamentPersistentHeader','scsPracticeSharedHeader']){const header=el(id);if(header&&!header.hidden&&header.getClientRects().length&&getComputedStyle(header).display!=='none')top=Math.max(top,header.getBoundingClientRect().bottom);}values.top=Math.round(top)+'px';
+  if(!scorePreviewSurface)scorePreviewSurface=Object.fromEntries(Object.keys(values).map(key=>[key,[overlay.style.getPropertyValue(key),overlay.style.getPropertyPriority(key)]]));
+  for(const [key,value] of Object.entries(values))if(overlay.style.getPropertyValue(key)!==value||overlay.style.getPropertyPriority(key)!=='important')overlay.style.setProperty(key,value,'important');
+ }else if(scorePreviewSurface){for(const [key,[value,priority]] of Object.entries(scorePreviewSurface)){if(value)overlay.style.setProperty(key,value,priority);else overlay.style.removeProperty(key);}scorePreviewSurface=null;}
+}
 function openCompleted(score,onClose){
  completedReturn=typeof onClose==='function'?onClose:null;
   if(!score||!Array.isArray(score.names)||score.names.length<4)return;
@@ -366,6 +375,7 @@ async function sendResult(){
 }
 
 function close(){
+ previewSurface(false);
  const done=el('scsScoreViewDone');if(done){done.hidden=true;done.style.removeProperty('display');}el('scsScoreLive')?.style.removeProperty('padding-bottom');
  if(completedReturn){const back=completedReturn;completedReturn=null;el('scsScoringOverlay').hidden=true;state=null;liveMatch=null;teamEditMatchId=null;savedScoreEditor=null;readOnly=false;readOnlySet=0;memberPickerEntry=false;standaloneMode=false;document.querySelectorAll('.scs-score-side-actions,.scs-score-controls').forEach(n=>n.hidden=false);back();if(typeof window.scsRefreshTournamentHeader==='function')window.scsRefreshTournamentHeader();return;}
  ++pickerLoadId;
@@ -466,7 +476,7 @@ function renderPickleballCards(){
  el('scsPickleballCall').textContent=(serving===0?'Team A':'Team B')+' serving. '+state.names[state.server]+', '+court+' court. Score call '+SCSPickleballScoring.call(state);
 }
 function render(autoScroll){if(!state)return;
- let done=el('scsScoreViewDone');if(!done){done=document.createElement('button');done.id='scsScoreViewDone';done.type='button';done.textContent='✓ Done';done.setAttribute('aria-label','Done viewing score');done.onclick=close;el('scsScoringOverlay').appendChild(done);}done.hidden=!readOnly;
+ let done=el('scsScoreViewDone');if(!done){done=document.createElement('button');done.id='scsScoreViewDone';done.type='button';done.textContent='✓ Done';done.setAttribute('aria-label','Done viewing score');done.onclick=close;el('scsScoringOverlay').appendChild(done);}done.hidden=!readOnly;previewSurface(readOnly);
  if(readOnly){
   // The tournament header covers a viewport-top button. Keep Done at the visible bottom instead.
   let inset=0;document.querySelectorAll('.scs-tm-bottom-nav,.scs-tmgr-bottom-nav').forEach(nav=>{if(!nav.hidden&&nav.getClientRects().length&&getComputedStyle(nav).display!=='none')inset=Math.max(inset,innerHeight-nav.getBoundingClientRect().top);});

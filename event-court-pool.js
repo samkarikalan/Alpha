@@ -30,7 +30,7 @@ function renderCourtOverview(c){
   if(slot.dataset.currentMatch==='true')continue;
   const n=Number(slot.dataset.unifiedCourt),match=(model.byCourt.get(n)||[])[0];
   if(match){const html='<h4>Court '+n+'</h4><div class="scs-event-court-row"><strong>'+escape(match.status)+'</strong><small>'+escape(match.event+' · Match '+match.match)+'<br>'+escape(match.pairs.map(p=>p.join(' / ')).join(' vs '))+'</small></div>';if(slot._scsOtherHtml!==html){slot._scsOtherHtml=html;slot.innerHTML=html;}}
-  else if(slot._scsOtherHtml){slot._scsOtherHtml='';slot.innerHTML='<h4>Court '+n+'</h4>'+SCSSharedMatchCenter.court({number:n});}
+  else if(slot._scsOtherHtml){slot._scsOtherHtml='';slot.innerHTML=SCSSharedMatchCenter.court({number:n});}
  }return;}
  const html='<h3>Live court status</h3>'+c.numbers.map(n=>{const matches=model.byCourt.get(n)||[],match=matches[0];return '<div class="scs-event-court-row" data-court-number="'+n+'" data-court-state="'+(!match?'free':match.ready?'approval':match.playing?'playing':'assigned')+'"><strong>Court '+n+'</strong><span>'+escape(match?match.status:'Free')+'</span>'+(match?'<small>'+escape(match.event+' · Match '+match.match)+'<br>'+escape(match.pairs.map(p=>p.join(' / ')).join(' vs '))+'</small>':'')+'</div>';}).join('');if(box._scsHtml!==html){box._scsHtml=html;box.innerHTML=html;}
 }
