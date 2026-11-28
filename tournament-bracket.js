@@ -1710,6 +1710,7 @@ async function assign(id,flow){if(readonly)return false;
  if(current&&(current.started_at||current.score||current.score_status)){alert('This match has already started.');return;}
  var recent=latestCompletedPlayerKeys(games),target=getMatch(id),alternatives=playableTournamentMatches();
  if(target&&matchNeedsRest(target,recent)&&alternatives.some(function(m){return !matchNeedsRest(m,recent)})){alert('Give these players one match of rest. Assign another ready match first.');return;}
+ if(!draw._scsCloudTournamentId){draw._scsCloudTournamentId=crypto.randomUUID();await localTournamentSave(draw);}
  draw.assigningMatch=Number(id);
  var count=Math.max(1,Number(state.courtCount)||Number(draw.numCourts)||1);
  return SCSCourtAssignmentPopup.open({startOnAssign:true,title:'Match '+matchDisplayNumber(id),onClose:flow?.onClose,loadScoringPassword:()=>window.scsMatchScoringPassword('get',draw._scsCloudTournamentId,String(id)),saveScoringPassword:value=>window.scsMatchScoringPassword('set',draw._scsCloudTournamentId,String(id),value),courts:SCSEventCourtPool.ids(draw).map(function(n){return {number:n,occupied:games.some(function(g){return Number(g.court)===n&&g.court_center_status!=='approved'})}}),onChoose:function(n){return selectAssignmentCourt(n)}});
@@ -1720,9 +1721,10 @@ async function selectAssignmentCourt(court){if(!draw||!draw.live)return false;if
  var unavailable=SCSTournamentOrder.check(draw,draw.assigningMatch);if(unavailable){alert(unavailable);return false;}
  if(!draw||!draw.assigningMatch)return;
  var id=Number(draw.assigningMatch),cc=window.SCSCourtCenter,state=cc.liveState(),games=state.games||[];
+ if(!draw._scsCloudTournamentId){draw._scsCloudTournamentId=state.tournament?._scsCloudTournamentId||crypto.randomUUID();await localTournamentSave(draw);}
  var occupied=games.find(function(g){return Number(g.court)===Number(court)&&g.court_center_status!=='approved'&&Number(g.tournament_match)!==id});
  if(occupied){alert('Court is occupied. Select a free court.');return false;}
- try{var ok=await cc.assignTournamentMatch(id,matchInfo(id),Number(court),true);if(ok){draw.assigningMatch=0;render();return await SCSTournamentScores.publishAssignment()}return false}
+ try{var ok=await cc.assignTournamentMatch(id,matchInfo(id),Number(court),true);if(ok){draw.assigningMatch=0;render();return await SCSTournamentScores.publishAssignment({tournamentId:draw._scsCloudTournamentId,matchKey:id})}return false}
  catch(e){alert(e.message||'Court assignment failed.');return false;}
 }
 

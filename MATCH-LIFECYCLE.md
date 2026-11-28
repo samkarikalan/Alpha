@@ -29,4 +29,12 @@ Before releasing changes to this flow, verify the cases in `match-sync/tests`:
 - Court collisions, incorrect players, stale revisions, protected passwords and conflicting finished results are rejected.
 - Existing approved results remain unchanged. Tests use isolated fixtures, not live tournament mutations.
 
-The existing deployed Supabase/Worker supports this contract. The accompanying app update must be uploaded to activate all entry-path changes. This file records a release requirement, not a claim that files were deployed automatically.
+Deployment requirements are recorded with each update. This file is a source contract, not a claim that prepared Worker/app files were deployed automatically.
+
+## Independent tournament match publication (supersedes snapshot prerequisites)
+
+Tournament may keep setup locally or sync it separately. Assigned matches are durably queued and published directly to `tournament_live_matches`; no server tournament/session record is required. Publication, password setup, scores and approvals use an independent match queue. A stalled snapshot queue cannot block that queue. Local event courts and cached court sessions are sufficient to create assignments; server match writes enforce occupied courts. Credentials remain private and do not require a tournament record.
+
+Scoreboard tournament discovery, history approval checks and submission use match records only. Its background club download must not fetch tournament snapshots. Ordinary rounds continue to read/write their existing session/round records and are not converted to match-only records.
+
+Required release tests: independent-publication.cjs, native-publication.cjs and rounds-unchanged.cjs, plus schema/Worker security tests. The independent tests must start with ZERO server tournament/session records and a deliberately stalled snapshot upload.

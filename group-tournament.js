@@ -577,6 +577,7 @@ function scoreMatch(id){if(!started)return false;if(viewOnly)return false;const 
 function scoreUpdate(id,score,winner){if(viewOnly)return false;const m=matches.find(x=>x.id===id);if(!m||!['playing','score_ready'].includes(m.status))return false;m.score=score;if(winner){m.winner=winner;m.status=window.SCSLiveMatches?'playing':'score_ready'}save();render();return true}
 async function approveMatch(id){if(viewOnly)return false;const m=matches.find(x=>x.id===id);if(!m||m.status!=='score_ready'||!['L','R'].includes(m.winner)||!m.score||!m.score.finished)return;try{if(!window.SCSTournamentEngine)throw Error('Tournament engine is unavailable.');if(window.SCSLiveMatches){if(!await SCSLiveMatches.enabled())throw Error('Connect to the match-sync service before approving.');const remote=await SCSLiveMatches.submittedMatch(cloudTournamentId,id);if(JSON.stringify([assignments[m.a],assignments[m.b]])!==JSON.stringify([remote.data.pair1,remote.data.pair2]))throw Error('The fixture players changed. Refresh before approving.');await SCSTournamentLocal.approveLiveMatch(remote);m.score=JSON.parse(JSON.stringify(remote.data.score));m.winner=remote.data.winner;}const approved=await SCSTournamentEngine.run('approve-result',{score:m.score,winner:m.winner,left:m.a,right:m.b});m.status=approved.status}catch(error){alert(error.message||'Could not approve this result.');return}m.completedOrder=++assignmentSerial;m.completedCourt=m.court;m.court=null;workerGroupStandings=Object.create(null);await refreshWorkerGroupStandings(false);save();render();if(groupKnockoutReady({started,matches})&&eventStageScopes.get(String(groupEventId))!=='group')await groupKnockoutOpen(0)}
 function assignCourt(id,flow){
+ if(!cloudTournamentId){cloudTournamentId=crypto.randomUUID();save();}
  if(viewOnly||!started||!window.SCSEventCourtPool?.ready(el()))return false;
  const m=matches.find(x=>x.id===id);
  if(!m||m.court||m.status!=='pending'||viewOnly)return;
@@ -590,7 +591,7 @@ function assignCourt(id,flow){
   onChoose:async n=>{
    if(viewOnly||!started)return false;
    if(SCSTournamentOrder.check(groupSchedulingState(),id)||!groupCourtIds().includes(n)||m.status!=='pending'||m.court||teamBusy(m.a)||teamBusy(m.b)||matches.some(x=>x.court===n&&x.status!=='approved'))return false;
-   m.court=n;m.status='playing';m.scoringRules=JSON.parse(JSON.stringify(groupEventRules()));m.startedAt=Date.now();m.assignedOrder=++assignmentSerial;assigningMatch=null;save();render();if(flow?.afterAssign)await flow.afterAssign();return await SCSTournamentScores.publishAssignment();
+   m.court=n;m.status='playing';m.scoringRules=JSON.parse(JSON.stringify(groupEventRules()));m.startedAt=Date.now();m.assignedOrder=++assignmentSerial;assigningMatch=null;save();render();if(flow?.afterAssign)await flow.afterAssign();return await SCSTournamentScores.publishAssignment({tournamentId:cloudTournamentId,matchKey:m.id});
   }
  });
 }

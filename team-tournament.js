@@ -332,13 +332,14 @@ function editEncounter(id){if(viewOnly)return false;
  };
 }
 function assignTeamCourt(id,flow){
+ if(!state._scsCloudTournamentId){state._scsCloudTournamentId=crypto.randomUUID();save();}
  if(viewOnly||!SCSEventCourtPool.ready(root()))return false;
  const m=allMatches().find(y=>y.id===id);
  if(!m||m.status!=='pending'||m.court||!Array.isArray(m.pairs)||m.pairs.length!==2||m.pairs.some(p=>p.length!==2||p.some(n=>!n)))return false;
  const unavailable=SCSTournamentOrder.check(state,id);if(unavailable){alert(unavailable);return false;}
  return SCSCourtAssignmentPopup.open({startOnAssign:true,title:matchName(m),onClose:flow?.onClose,loadScoringPassword:()=>window.scsMatchScoringPassword('get',state._scsCloudTournamentId,m.id),saveScoringPassword:value=>window.scsMatchScoringPassword('set',state._scsCloudTournamentId,m.id,value),courts:SCSEventCourtPool.ids(state).map(n=>({number:n,occupied:allMatches().some(y=>y.court===n&&y.status!=='approved')})),onChoose:async n=>{
   if(viewOnly||SCSTournamentOrder.check(state,id)||m.status!=='pending'||m.court||!SCSEventCourtPool.ids(state).includes(n)||allMatches().some(y=>y.court===n&&y.status!=='approved'))return false;
-  m.court=n;m.status='playing';m.startedAt=Date.now();if(!m.scoringRules&&state.scoringRules)m.scoringRules=JSON.parse(JSON.stringify(state.scoringRules));assigning=null;save();render();if(flow?.afterAssign)await flow.afterAssign();return await SCSTournamentScores.publishAssignment();
+  m.court=n;m.status='playing';m.startedAt=Date.now();if(!m.scoringRules&&state.scoringRules)m.scoringRules=JSON.parse(JSON.stringify(state.scoringRules));assigning=null;save();render();if(flow?.afterAssign)await flow.afterAssign();return await SCSTournamentScores.publishAssignment({tournamentId:state._scsCloudTournamentId,matchKey:m.id});
  }});
 }
 async function assignFromDashboard(item,onHome){

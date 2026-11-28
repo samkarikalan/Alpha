@@ -127,9 +127,9 @@ async function openPicker(){
   box.querySelector('[data-score-refresh]').disabled=true;
   try{
     try{clubPlayers=normalizePlayers(typeof dbGetPlayers==='function'&&(window.SCSSportContext?.appModule!=='scoreboard'||getMyClub()?.id)?await dbGetPlayers(false):[]);}catch(_){clubPlayers=[];}
-    var compactMatches=window.SCSLiveMatches&&await SCSLiveMatches.enabled();
+    var compactMatches=true; // Tournament discovery uses only the match table; rounds keep their existing session path.
     var sessions=typeof dbGetLiveSessions==='function'?await dbGetLiveSessions({strict:true,excludeTournaments:!!compactMatches}):[];
-    var currentLocalTournament=window.SCSCourtCenter?.localSession?.();
+    var currentLocalTournament=null;
     if(!compactMatches&&window.SCSSportContext?.appModule==='scoreboard'){
       if(!window.SCSTournamentScores?.filterCurrentSessions)throw Error('Tournament assignment validation is unavailable. Reload the app.');
       var currentViews=await SCSTournamentScores.filterCurrentSessions(currentLocalTournament?sessions.concat([currentLocalTournament]):sessions);

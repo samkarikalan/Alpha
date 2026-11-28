@@ -1,17 +1,41 @@
-Start Event feedback and bounded requests — consolidated app update
+Independent tournament matches — consolidated updated files
 
-Upload the ten JavaScript files in this ZIP to the existing app root. Keep the included contract/source instructions with the project. Reopen/update Tournament and Scoreboard. No Supabase SQL or Worker deployment is required if the compact match-sync Worker is already installed.
+SCOPE
+Tournament match handling only. Existing ordinary rounds continue through their existing session/round database path. Tournament may keep its setup locally or sync it separately. Scoreboard tournament discovery and scoring use tournament_live_matches; they do not read tournament snapshots or tournament court-session records.
 
-This bundle includes the prior shared match lifecycle changes so you do not need to stack the earlier app patches.
+SUPABASE STATUS: ALREADY APPLIED
+Project SCSDB has the independent publication/password RPCs and direct-publication support. Public clients cannot call these functions or read private match passwords. Existing scores, approved results and snapshots were not edited or deleted. The SQL in deployment/ is included as reference; do not run it again on SCSDB.
 
-Start Event now:
-- Shows Starting event and a visible progress message while working.
-- Prevents duplicate clicks and restores the button after a failure/cancellation.
-- Shows setup/court errors inline instead of only returning silently or leaving an unhandled error.
-- Bounds tournament engine and court allocation HTTP requests to 15 seconds.
-- Bounds Knockout's existing court-session lookup; an unconfirmed lookup cannot silently create a duplicate session.
-- Commits a Group event's local save before displaying the started state. Standings are not a prerequisite for starting.
+STILL REQUIRED
+1. Replace and deploy the existing scs-app Cloudflare Worker using deployment/SCS-Worker-independent-matches.js. Keep the existing secrets/bindings. Do not use an older Worker file from a previous ZIP.
+2. Upload the JavaScript files at the ZIP root to the existing app root. Keep the source contract/instructions with the project. This consolidated update includes the previous lifecycle and Start Event changes.
+3. Close/reopen or update Tournament and Scoreboard on all devices. Do not clear app/site data: it contains your local setup, saved scores and pending work.
+4. Open Tournament and use Sync now, or assign a match. Previously saved assigned fixtures are recovered into the independent match queue. Once publication is confirmed, the assignment notice says Available in Scoreboard. Refresh Scoreboard on the same or another device.
 
-A failed server prerequisite will still prevent start and will now show its actual error. This patch does not clear or delete the 13 pending records shown in your sync panel, and it does not claim to identify the exact failed request from the screenshot. Keep those local records and export a backup for queue diagnosis.
+Worker check: POST /tournament/live with {"action":"capabilities"} must return protocol:2, matchSync:true and directPublication:true. Until the new Worker is deployed, match publication/password jobs show an update-required error and remain saved.
 
-Tests passed: actual Group Start Event working state/local success; a stalled fixture endpoint produces a timeout and retry state without marking the event started; Knockout court-start failure produces an inline error and restores the button. All five existing match lifecycle suites also passed. Tests use isolated fixtures and mock endpoints; no real tournament data was changed.
+WHAT CHANGED
+- An assigned Group, Team or Knockout match is saved locally and published directly to the match table. It does not wait for the tournament or session snapshot to upload.
+- Match publication/password/score/approval jobs have their own sync lane. A stalled old tournament backup cannot stop this lane. Each independent match failure remains visible and does not stop other match jobs.
+- Court allocation in an open local tournament uses the local parent allocation. KO starts/assignments can use locally saved court sessions. Neither needs a server tournament record before publishing a match. Occupied physical courts are still protected atomically by the match table.
+- Match passwords are private and tied to the match, with no tournament-record prerequisite. Existing password values for current match records were preserved when present.
+- Scoreboard no longer downloads full tournament snapshots in its background club download, and tournament discovery/history submission has no snapshot fallback.
+- Old tournament snapshot jobs on a Scoreboard device are retained rather than sent through the legacy tournament path. Saved tournament results can be resubmitted from device History through their match record.
+- The sync panel separates match-delivery pending counts from tournament-backup pending counts. An old backup error may still show ! Sync; it does not mean an independently published match is missing from Scoreboard.
+- Final scores need a server receipt before being called sent. Organizer approval remains a separate match action, and approved scores remain immutable to every scoring device.
+
+ROUNDS ARE UNCHANGED
+Ordinary rounds still load from sessions, start with their existing setup and write points/results back through their existing session/round handlers. They are not published as tournament matches. A real Scoreboard browser regression verified this path and verified that it did not issue tournament-table reads or match-table score/publication writes for the round.
+
+VALIDATION
+All seven current suites passed with isolated PostgreSQL and mocked browser/Worker endpoints:
+- Existing schema/transitions, stale revisions, occupied courts and immutable results.
+- Assembled Worker authentication/routing and blocked generic access to private match records.
+- Group/Team/KO publication with ZERO server tournament/session records while a legacy snapshot upload is deliberately stalled.
+- Actual Group assignment popup and actual KO Court Center start/assignment/receipt/approval under those same conditions.
+- Actual ordinary-round discovery and point update in Scoreboard, using its existing session path.
+- Actual scoring UI local-first Save & Close and server-confirmed final receipt.
+- Stale tournament snapshot echoes cannot overwrite an independently scored match; conflicting local finished work stays retained.
+
+No real tournament result was modified for testing. Worker/site uploads were not performed here. Database checks confirmed publication RPC readiness, private RLS and denied public access to publication/password functions. The advisor's RLS-with-no-policy INFO for the private match/password stores is intentional: only the authenticated Worker using its service role accesses them.
+Reference: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy

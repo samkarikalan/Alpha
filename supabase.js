@@ -242,10 +242,9 @@ window.scsFlushPracticeOutbox = scsFlushPracticeOutbox;
 // the same account, membership and slot data; without this guard one UI event can
 // fan out into many identical Worker/Supabase reads.
 async function scsMatchScoringPassword(action,tournamentId,matchKey,password){
- const user=typeof authGetUser==='function'?authGetUser():null;
- const token=typeof _getLocalToken==='function'?_getLocalToken():null;
- const res=await fetch(WORKER_URL+'/scoring-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,tournamentId,matchKey,password,userAccountId:user?.id,sessionToken:token})});
- const data=await res.json().catch(()=>({}));if(!res.ok)throw Error(data.error||'Password service unavailable');return action==='get'?data.password:action==='verify'?data:true;
+ if(!window.SCSLiveMatches)throw Error('Match service is not loaded.');
+ if(action==='set'){if(!window.SCSTournamentLocal)throw Error('Local match storage is not loaded.');await SCSTournamentLocal.saveMatchPassword(tournamentId,String(matchKey),password);return true;}
+ const data=await SCSLiveMatches.password(action,tournamentId,matchKey,password);return action==='get'?data.password:data;
 }
 window.scsMatchScoringPassword=scsMatchScoringPassword;
 // Per-login, per-match memory only: never stored in tournament state or local storage.
@@ -825,6 +824,7 @@ async function scsDownloadClubSnapshot(clubId) {
   const previousRow = await SCSOfflineDB.getClubSnapshot(id).catch(() => null);
   const previous = previousRow && previousRow.data ? previousRow.data : {};
   const snapshot = Object.assign({}, previous, { clubId:id, downloadedAt:new Date().toISOString() });
+  const scoreboardOnly=window.SCSSportContext?.appModule==='scoreboard';if(scoreboardOnly)delete snapshot.tournaments;
 
   async function load(name, table, query) {
     try { snapshot[name] = await sbGet(table, query); }
@@ -835,8 +835,8 @@ async function scsDownloadClubSnapshot(clubId) {
     load('club', 'clubs', `id=eq.${id}&select=id,name,parent_club_id,created_by,created_at`),
     load('memberships', 'memberships', `club_id=eq.${id}&select=*`),
     load('slots', 'slots', `club_id=eq.${id}&select=*`),
-    load('sessions', 'sessions', `club_id=eq.${id}&select=*`),
-    load('tournaments', 'tournaments', `club_id=eq.${id}&select=*`),
+    load('sessions', 'sessions', `club_id=eq.${id}${scoreboardOnly?'&or=(started_by.is.null,started_by.neq.__SCS_TOURNAMENT_COURT_CENTER__)':''}&select=*`),
+    ...(scoreboardOnly?[]:[load('tournaments', 'tournaments', `club_id=eq.${id}&select=*`)]),
     load('joinRequests', 'club_join_requests', `club_id=eq.${id}&select=*`),
     load('roles', 'user_club_roles', `club_id=eq.${id}&select=*`)
   ]);
