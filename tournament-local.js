@@ -23,6 +23,48 @@ async function ready(forScope,allowChanged=false){const s=forScope||scope();if(!
  })();loaded.set(generation,promise);promise.catch(e=>{loaded.delete(generation);dbError=e.message;notify();});}await loaded.get(generation);if(!allowChanged)assertScope(s);if(!hydrated.has(generation)){hydrated.add(generation);const cached=[];for(const [name,value] of legacy){if(!name.startsWith(generation+'|'))continue;const parsed=legacySnapshot(name.slice(generation.length+1),value);if(!parsed?.state)continue;const st=parsed.state;if(!st._scsCloudTournamentId)continue;const x=snapshot(parsed.format,st,s);if(findRecord(s,'tournaments',x.row))continue;const record={key:key(s,'tournaments',x.row.id),scope:generation,table:'tournaments',row:x.row,base:null,pending:false,deleted:false};records.set(record.key,record);cached.push(record);}if(cached.length)await transaction(['records'],tx=>cached.forEach(r=>tx.objectStore('records').put(r)));}}
 function notify(){window.dispatchEvent(new CustomEvent('scs-tournament-sync-status'));queueMicrotask(renderStatus);}
 function schedule(){clearTimeout(timer);timer=setTimeout(()=>sync({background:true}).catch(()=>{}),450);}
+// Inserted inside the existing durable journal closure.
+const matchReadTimes=new Map();
+async function ingestLiveMatches(matches){
+ const s=scope();if(!s)return;await ready(s);const updates=[];
+ for(const record of records.values()){if(record.scope!==s.key||!['sessions','tournaments'].includes(record.table)||record.deleted)continue;
+  const base=window.SCSLiveMatches.overlay(record.table,record.base||record.row,matches),row=record.pending?record.row:window.SCSLiveMatches.overlay(record.table,record.row,matches);
+  if(sameSyncPayload(record.row,row)&&sameSyncPayload(record.base||{},base||{}))continue;
+  const updated={...record,row,base};records.set(record.key,updated);hydrateLegacy(s,row);updates.push(updated);
+ }
+ if(updates.length)await transaction(['records','legacy'],tx=>{for(const r of updates)tx.objectStore('records').put(r);for(const [k,value] of legacy)if(k.startsWith(s.key+'|'))tx.objectStore('legacy').put({key:k,scope:s.key,name:k.slice(s.key.length+1),value});});
+}
+function matchParts(table,row){
+ const parts=[];if(table==='sessions'){for(const r of row?.rounds_data||[])if(r.tournament?._scsCloudTournamentId)for(const game of r.games||[])parts.push({event:r.tournament._scsCloudTournamentId,key:String(game.tournament_match),game,pairs:[game.pair1,game.pair2]});}
+ else if(row?.state&&!row.state._scsMainTournament){const state=row.state;for(const m of row.format==='team'?(state.encounters||[]).flatMap(e=>e.matches||[]):state.matches||[])parts.push({event:row.id,key:String(m.id),game:row.format==='knockout'?{...m,...(state.results?.[m.id]?{status:'approved'}:{}),...(state.matchScores?.[m.id]?{score:state.matchScores[m.id]}:{})}:m,pairs:row.format==='group'?[state.assignments?.[m.a],state.assignments?.[m.b]]:m.pairs});}return parts;
+}
+function matchSkeleton(table,row){const value=clone(row);delete value.updated_at;delete value.status;if(table==='sessions'){delete value.status;for(const round of value.rounds_data||[]){round.games=[];if(round.tournament){delete round.tournament.results;delete round.tournament.matchScores;}}}else if(value.state){delete value.state.assignmentSerial;if(value.format==='knockout'){delete value.state.results;delete value.state.matchScores;}const dynamic=['score','scoreboard','winner','status','court','completedCourt','assignedOrder','completedOrder','startedAt','started_at','scoringRules','conduct_finished','remoteScoreRevision'];for(const m of value.format==='team'?(value.state.encounters||[]).flatMap(e=>e.matches||[]):value.state.matches||[])for(const field of dynamic)delete m[field];}return value;}
+async function sendMatchChanges(job){
+ if(!window.SCSLiveMatches||!await SCSLiveMatches.enabled())return null;
+ const desired=matchParts(job.table,job.row),before=matchParts(job.table,job.base);
+ if(!desired.length||!job.base||!job.scoreRef&&!equal(matchSkeleton(job.table,job.row),matchSkeleton(job.table,job.base)))return null;
+ const changes=desired.filter(part=>{const old=before.find(p=>p.event===part.event&&p.key===part.key);return !old||!equal(part.game,old.game);});
+ if(!changes.length)return null;const resolved=await Promise.all(changes.map(part=>SCSLiveMatches.find(part.event,part.key)));if(resolved.some(row=>!row))return null;const results=[];
+ for(const [partIndex,part] of changes.entries()){const old=before.find(p=>p.event===part.event&&p.key===part.key),game=part.game,row=resolved[partIndex];
+  const approved=game.status==='approved'||game.court_center_status==='approved';
+  const assigned=game.court&&(!old?.game.court||Number(old.game.court)!==Number(game.court)||!old.game.started_at&&game.started_at||!old.game.startedAt&&game.startedAt);
+  let result=row;const token=job.revision+':'+row.id;
+  if(approved)result=await SCSLiveMatches.apply(row,'approve',{},token+':approve');
+  else if(assigned||row.status==='pending'&&game.court){if(!part.pairs?.every(p=>Array.isArray(p)&&p.length===2))return null;result=await SCSLiveMatches.apply(row,'assign',{court:Number(game.court),pair1:part.pairs[0],pair2:part.pairs[1],ccid:game.ccid,started:game.status==='playing'||game.score_status==='scoring',startedAt:game.started_at||game.startedAt},token+':assign');}
+  else if(!game.court&&old?.game.court)return null;
+  if(!approved&&game.score&&(!old||!equal(game.score,old.game.score)||game.winner!==old.game.winner))result=await SCSLiveMatches.apply(result,'score',{score:SCSLiveMatches.scorePayload(game.score),winner:game.winner||null,finish:!!game.conduct_finished},token+':score');
+  results.push(result);
+ }
+ return SCSLiveMatches.overlay(job.table,job.row,results);
+}
+async function saveLiveScore(match,score,winner,finish){const s=scope();if(!s)throw Error('Sign in before saving scores.');await ready(s,true);return enqueue(s,'match_scores',{id:match.remoteMatch.id,matchRef:clone(match.remoteMatch),score:clone(score),winner:winner||null,finish:!!finish});}
+async function sendLiveScoreJob(job){
+ if(!await SCSLiveMatches.enabled())throw Error('The match-sync Worker is unavailable. Keep the saved result and retry after updating it.');
+ const all=await SCSLiveMatches.refresh(),match=all.find(m=>m.id===job.row.id);if(!match)throw Error('Assigned match not found.');
+ await SCSLiveMatches.apply(match,'score',{score:SCSLiveMatches.scorePayload(job.row.score),winner:job.row.winner,finish:job.row.finish},job.revision);
+ return clone(job.row);
+}
+
 function matchValue(row,field){if(field.startsWith('state->>'))return row.state?.[field.slice(8)];return row[field];}
 function filterRows(rows,query,serverIds){const p=new URLSearchParams(query||'');let result=rows.filter(row=>{for(const [field,rule] of p){if(['select','order','limit','offset'].includes(field))continue;const dot=rule.indexOf('.'),op=rule.slice(0,dot),v=rule.slice(dot+1),actual=matchValue(row,field);if(serverIds?.has(row.id)&&actual===undefined)continue;if(op==='eq'&&String(actual)!==v)return false;if(op==='neq'&&String(actual)===v)return false;if(op==='in'&&!v.replace(/^\(|\)$/g,'').split(',').includes(String(actual)))return false;if(op==='is'&&(v==='null'?actual!=null:String(actual)!==v))return false;if(op==='gte'&&String(actual)<v||op==='gt'&&String(actual)<=v||op==='lte'&&String(actual)>v||op==='lt'&&String(actual)>=v)return false;}return true;});const order=p.get('order');if(order){const [field,direction]=order.split(',')[0].split('.');result.sort((a,b)=>String(a[field]??'').localeCompare(String(b[field]??''))*(direction==='desc'?-1:1));}const offset=Number(p.get('offset'))||0,limit=p.has('limit')?Number(p.get('limit')):result.length;return result.slice(offset,offset+limit);}
 function rowsFor(s,table){return [...records.values()].filter(r=>r.scope===s.key&&r.table===table&&!r.deleted).map(r=>clone(r.row));}
@@ -79,8 +121,16 @@ Storage.prototype.setItem=function(name,value){if(this!==localStorage||!managed(
  else{mirror(s,name,value);task=transaction(['legacy'],tx=>tx.objectStore('legacy').put({key:s.key+'|'+name,scope:s.key,name,value}));}
  track(Promise.resolve(task)).catch(()=>{});};
 Storage.prototype.removeItem=function(name){if(this!==localStorage||!managed(String(name)))return storage.remove.call(this,name);const s=scope();if(s){legacy.delete(s.key+'|'+name);track(transaction(['legacy'],tx=>tx.objectStore('legacy').delete(s.key+'|'+name))).catch(()=>{});}try{storage.remove.call(this,name);}catch(_){} };
-async function read(table,query){const s=scope();if(!s)return raw.get(table,query);await ready(s);const queryClub=new URLSearchParams(query||'').get('club_id');if(queryClub&&queryClub!=='eq.'+s.clubId)return raw.get(table,query);let server=[],error;
- try{if(navigator.onLine===false)throw Error('Offline');server=await raw.get(table,query)||[];assertScope(s);await remember(s,table,server);}catch(e){error=e;}
+async function read(table,query){const s=scope();if(!s)return raw.get(table,query);await ready(s);const queryClub=new URLSearchParams(query||'').get('club_id');
+ try{if(navigator.onLine!==false&&(!queryClub||queryClub==='eq.'+s.clubId)&&rowsFor(s,table).length&&window.SCSLiveMatches&&await SCSLiveMatches.enabled()){
+  const cacheKey=s.key+'|'+table+'|'+query,now=Date.now();let metadata;
+  if(now-(matchReadTimes.get(cacheKey)||0)>10000){const params=new URLSearchParams(query||'');params.set('select',table==='sessions'?'id,club_id,status,started_by,updated_at':'id,club_id,status,format,updated_at');metadata=await raw.get(table,params.toString());assertScope(s);const changed=(metadata||[]).some(row=>{const record=records.get(key(s,table,row.id));return !record||record.base?.updated_at!==row.updated_at;});if(changed)metadata=null;else matchReadTimes.set(cacheKey,now);}
+  else metadata=rowsFor(s,table).map(row=>({id:row.id}));
+  if(metadata){await SCSLiveMatches.refresh();const serverIds=new Set(metadata.map(r=>r.id)),cached=rowsFor(s,table).filter(row=>serverIds.has(row.id)||records.get(key(s,table,row.id))?.pending);return filterRows(cached,query,serverIds);}
+ }
+}catch(error){assertScope(s);/* Fall through to the existing durable offline read. */}
+if(queryClub&&queryClub!=='eq.'+s.clubId)return raw.get(table,query);let server=[],error;
+ try{if(navigator.onLine===false)throw Error('Offline');server=await raw.get(table,query)||[];assertScope(s);if(window.SCSLiveMatches&&await SCSLiveMatches.enabled()){const live=await SCSLiveMatches.refresh();server=server.map(row=>SCSLiveMatches.overlay(table,row,live));}await remember(s,table,server);}catch(e){error=e;}
  const serverIds=new Set(server.map(r=>r.id)),map=new Map(server.map(r=>[r.id,r]));for(const r of records.values())if(r.scope===s.key&&r.table===table){if(r.deleted){map.delete(r.row.id);serverIds.delete(r.row.id);}else if(r.pending||r.localError||(error||table==='tournaments')&&!map.has(r.row.id)){map.set(r.row.id,clone(r.row));serverIds.delete(r.row.id);}}
  const result=filterRows([...map.values()],query,serverIds);const idFilter=new URLSearchParams(query||'').get('id'),known=idFilter?.startsWith('eq.')&&records.has(key(s,table,idFilter.slice(3)));if(error&&!result.length&&table==='sessions'&&!known&&!/__SCS_TOURNAMENT_COURT_CENTER__/.test(query||''))throw error;return result;
 }
@@ -95,7 +145,29 @@ async function request(s,method,table,query,data,scoreRef){assertScope(s);if(nav
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
  try{const res=await fetch(WORKER_URL+'/db/'+method,{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({table,query,data,prefer:'return=representation',userAccountId:s.accountId,sessionToken:token,scoringPassword})});const body=await res.json().catch(()=>null);if(!res.ok){const e=Error(body?.error||'Server sync failed ('+res.status+').');e.code=body?.code||(res.status===401||res.status===403?'AUTH':res.status===409?'CONFLICT':null);throw e;}return body;}finally{clearTimeout(timeout);}
 }
-async function send(job){const s=job.owner;assertScope(s);const q='id=eq.'+encodeURIComponent(job.row.id)+'&club_id=eq.'+encodeURIComponent(s.clubId);let latest=(await request(s,'get',job.table,q+'&select=*'))?.[0];assertScope(s);
+function mergeMatchScore(job,latest){
+ const fail=message=>{const error=Error(message);error.code='CONFLICT';throw error;};
+ const row=clone(latest),key=String(job.scoreRef.matchKey);let before,next,target;
+ if(job.table==='sessions'){
+  const localRound=(job.row.rounds_data||[]).find(r=>(r.games||[]).some(g=>String(g.tournament_match)===key));
+  next=localRound?.games?.find(g=>String(g.tournament_match)===key);
+  const round=(row.rounds_data||[]).find(r=>String(r.round)===String(localRound?.round));
+  target=round?.games?.find(g=>next?.ccid?g.ccid===next.ccid:String(g.tournament_match)===key);
+  if(!next||!target||!equal([next.pair1,next.pair2],[target.pair1,target.pair2])||Number(next.court)!==Number(target.court))fail('Match assignment changed. Refresh the assigned match before sending.');
+  if(target.court_center_status==='approved')fail('This match is approved. Its score cannot be replaced.');
+ }else{
+  const matches=s=>job.row.format==='team'?(s?.encounters||[]).flatMap(e=>e.matches||[]):s?.matches||[];
+  next=matches(job.row.state).find(m=>String(m.id)===key);target=matches(row.state).find(m=>String(m.id)===key);
+  const pairs=(state,m)=>job.row.format==='group'?[state.assignments?.[m?.a],state.assignments?.[m?.b]]:m?.pairs;
+  if(!next||!target||!equal(pairs(job.row.state,next),pairs(row.state,target))||Number(next.court)!==Number(target.court))fail('Match assignment changed. Refresh the assigned match before sending.');
+  if(target.status==='approved')fail('This match is approved. Its score cannot be replaced.');
+ }
+ if((target.score_status==='scored'||target.status==='score_ready')&&!next.score?.finished)return row;
+ if(target.score?.finished&&next.score?.finished&&target.winner&&next.winner&&(target.winner!==next.winner||!equal(target.score.currentScore,next.score.currentScore)||!equal((target.score.completedSets||[]).map(s=>s.score),(next.score.completedSets||[]).map(s=>s.score)))){const error=Error('A different finished result is already on the server. Review both scores before changing it. Your device score is retained.');error.code='CONFLICT';throw error;}
+ const fields=job.table==='sessions'?['score','score_status','winner','conduct_finished']:['score','winner','status','remoteScoreRevision','conduct_finished'];
+ for(const field of fields)if(Object.hasOwn(next,field))target[field]=clone(next[field]);return row;
+}
+async function send(job){const s=job.owner;assertScope(s);if(job.table==='match_scores')return sendLiveScoreJob(job);if(['sessions','tournaments'].includes(job.table)){const compact=await sendMatchChanges(job);if(compact)return compact;}const q='id=eq.'+encodeURIComponent(job.row.id)+'&club_id=eq.'+encodeURIComponent(s.clubId);let latest=(await request(s,'get',job.table,q+'&select=*'))?.[0];assertScope(s);
  if(job.remove){if(latest)await request(s,'delete',job.table,q);return null;}
  if(latest&&job.table==='sessions'&&job.scoreRef){
   const proposed=(job.row.rounds_data||[]).flatMap(r=>r.games||[]);
@@ -110,7 +182,7 @@ async function send(job){const s=job.owner;assertScope(s);const q='id=eq.'+encod
  }
 
  if(!latest&&job.base){const e=Error('This event was removed on the server. The device copy is retained for review.');e.code='CONFLICT';throw e;}
- let row=clone(job.row);if(latest&&job.table==='tournaments'&&latest.state?._scsClientTournamentId&&job.row.state?._scsClientTournamentId&&latest.state._scsClientTournamentId!==job.row.state._scsClientTournamentId){const e=Error('This save points to a different event. The device copy is retained.');e.code='CONFLICT';throw e;}if(latest){if(job.base)row=merge(job.base,row,latest);else if(job.table==='tournaments'&&window.SCSTournamentScores&&['group','team'].includes(row.format))SCSTournamentScores.merge(row.format,row.state,latest.state||{});}
+ let row=clone(job.row);if(latest&&job.table==='tournaments'&&latest.state?._scsClientTournamentId&&job.row.state?._scsClientTournamentId&&latest.state._scsClientTournamentId!==job.row.state._scsClientTournamentId){const e=Error('This save points to a different event. The device copy is retained.');e.code='CONFLICT';throw e;}if(latest){if(job.scoreRef)row=mergeMatchScore(job,latest);else if(job.base)row=merge(job.base,row,latest);else if(job.table==='tournaments'&&window.SCSTournamentScores&&['group','team'].includes(row.format))SCSTournamentScores.merge(row.format,row.state,latest.state||{});}
  row.id=job.row.id;row.club_id=s.clubId;row.updated_at=stamp();if(row.state)row.state._scsCloudTournamentId=row.id;
  for(let attempt=0;attempt<3;attempt++){
   if(job.scoreRef&&!latest)throw Error('A score submission cannot create a tournament or session. Refresh the assigned match.');
@@ -118,7 +190,7 @@ async function send(job){const s=job.owner;assertScope(s);const q='id=eq.'+encod
   const result=await request(s,latest?'patch':'post',job.table,latest?q+(latest.updated_at?'&updated_at=eq.'+encodeURIComponent(latest.updated_at):''):'',payload,job.scoreRef);
   if(Array.isArray(result)&&result.length)return {...row,...result[0]};
   if(!latest)throw Error('Server did not confirm creation. Local work is retained.');
-  latest=(await request(s,'get',job.table,q+'&select=*'))?.[0];if(!latest)throw Error('The saved tournament was removed on the server. Local work is retained.');row=job.base?merge(job.base,job.row,latest):clone(job.row);row.updated_at=stamp();
+  latest=(await request(s,'get',job.table,q+'&select=*'))?.[0];if(!latest)throw Error('The saved tournament was removed on the server. Local work is retained.');row=job.scoreRef?mergeMatchScore(job,latest):job.base?merge(job.base,job.row,latest):clone(job.row);row.updated_at=stamp();
  }
  const e=Error('Tournament changed during sync. Local work is retained for review.');e.code='CONFLICT';throw e;
 }
@@ -193,8 +265,8 @@ async function openPanel(){
  paint();repair.hidden=!/court allocation changed|not allocated to this event/i.test(status().error);overlay.append(modal);overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};overlay.onkeydown=e=>{if(e.key==='Escape')overlay.remove();};document.body.append(overlay);(repair.hidden?controls[1]:repair).focus();
 }
 
-async function readRemoteScores(){const s=scope();if(!s)throw Error('Select a club to refresh scores.');await ready(s);const rows=await raw.get('tournaments','club_id=eq.'+encodeURIComponent(s.clubId)+'&status=eq.live&select=id,club_id,format,state');assertScope(s);return (rows||[]).filter(row=>row.club_id===s.clubId);}
-window.SCSTournamentLocal=Object.freeze({readRemoteScores,readServerRows,confirmRecord,ready,settled,saveTournament,sync,importLegacy,status,describe,merge,openPanel,exportBackup,recordCourtAction,finishCourtAction,failCourtAction,saveSession:async row=>{const s=scope();if(!s)throw Error('Select a club before saving.');await ready(s,true);return enqueue(s,'sessions',row);},listSessions:async()=>{await ready();const s=scope();return s?rowsFor(s,'sessions'):[];},isTournamentSession:isSession});
+async function readRemoteScores(){const s=scope();if(s&&window.SCSLiveMatches&&await SCSLiveMatches.enabled()){await SCSLiveMatches.refresh(true);return rowsFor(s,'tournaments').filter(r=>!r.state?._scsMainTournament&&['group','team'].includes(r.format));}if(!s)throw Error('Select a club to refresh scores.');await ready(s);const rows=await raw.get('tournaments','club_id=eq.'+encodeURIComponent(s.clubId)+'&status=eq.live&select=id,club_id,format,state');assertScope(s);return (rows||[]).filter(row=>row.club_id===s.clubId);}
+window.SCSTournamentLocal=Object.freeze({ingestLiveMatches,saveLiveScore,readRemoteScores,readServerRows,confirmRecord,ready,settled,saveTournament,sync,importLegacy,status,describe,merge,openPanel,exportBackup,recordCourtAction,finishCourtAction,failCourtAction,saveSession:async row=>{const s=scope();if(!s)throw Error('Select a club before saving.');await ready(s,true);return enqueue(s,'sessions',row);},listSessions:async()=>{await ready();const s=scope();return s?rowsFor(s,'sessions'):[];},isTournamentSession:isSession});
 window.addEventListener('online',()=>sync().catch(()=>{}));window.addEventListener('storage',()=>ready().then(notify).catch(()=>{}));document.addEventListener('visibilitychange',()=>{if(!document.hidden)ready().then(()=>sync({background:true})).catch(()=>{});});
 document.addEventListener('click',event=>{if(!event.target.closest?.('#scsTournamentManager,#scsTournamentContinue,#scsTournamentOverlay,#scsGroupTournament,#scsTeamTournament'))return;const s=scope();if(!s||hydrated.has(s.key))return;event.preventDefault();event.stopImmediatePropagation();const target=event.target;ready().then(()=>{if(target.isConnected)target.click();}).catch(e=>alert(e.message));},true);
 function init(){ready().then(()=>importLegacy()).then(()=>sync({background:true})).catch(e=>{dbError=e.message;notify();});new MutationObserver(renderStatus).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});}

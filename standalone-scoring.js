@@ -19,7 +19,7 @@ async function save(score){if(!score||!score.finished)throw Error('Match not com
 async function saveTournament(score,match,delivery){
  if(!score?.finished||!match)throw Error('Match not completed');
  const ref=match.remoteTournament;
- const source=ref?['cloud-tournament',ref.id,ref.matchId]:[match.sessionId,match.groupId||match.game?.ccid||match.game?.tournament_match||match.matchNo||'',match.round||1];
+ const source=match.remoteMatch?['live-match',match.remoteMatch.id]:ref?['cloud-tournament',ref.id,ref.matchId]:[match.sessionId,match.groupId||match.game?.ccid||match.game?.tournament_match||match.matchNo||'',match.round||1];
  const club=ref?.clubId||clubId();
  const id='tournament:'+JSON.stringify([club,source,match.pair1||[],match.pair2||[]]);
  const previous=await transact('readonly',s=>s.get(id));
@@ -95,7 +95,7 @@ async function renderHistory(list,onView,isCurrent){
  rows=rows.filter(function(r){return r.clubId===selectedClub;}).sort(function(a,b){return b.createdAt.localeCompare(a.createdAt);});
  if(!rows.length){list.innerHTML='<p class="scs-score-picker-empty">No saved matches on this device.</p>';return;}
  list.innerHTML='';
- let approvals=new Map();try{approvals=await window.SCSTournamentScores?.historyApprovals(rows.map(r=>r.score))||approvals;}catch(_){}
+ let approvals=new Map();try{approvals=await Promise.race([window.SCSTournamentScores?.historyApprovals(rows.map(r=>r.score)),new Promise(resolve=>setTimeout(()=>resolve(new Map()),1200))])||approvals;}catch(_){}
  if(isCurrent&&!isCurrent())return;
  rows.forEach(function(r){
   var score=r.score,n=score.names||[],sets=score.completedSets||[],wins=score.setWins||[0,0],winner=wins[0]>wins[1]?'left':'right';
