@@ -113,7 +113,9 @@ async function send(job){const s=job.owner;assertScope(s);const q='id=eq.'+encod
  let row=clone(job.row);if(latest&&job.table==='tournaments'&&latest.state?._scsClientTournamentId&&job.row.state?._scsClientTournamentId&&latest.state._scsClientTournamentId!==job.row.state._scsClientTournamentId){const e=Error('This save points to a different event. The device copy is retained.');e.code='CONFLICT';throw e;}if(latest){if(job.base)row=merge(job.base,row,latest);else if(job.table==='tournaments'&&window.SCSTournamentScores&&['group','team'].includes(row.format))SCSTournamentScores.merge(row.format,row.state,latest.state||{});}
  row.id=job.row.id;row.club_id=s.clubId;row.updated_at=stamp();if(row.state)row.state._scsCloudTournamentId=row.id;
  for(let attempt=0;attempt<3;attempt++){
-  const result=await request(s,latest?'patch':'post',job.table,latest?q+(latest.updated_at?'&updated_at=eq.'+encodeURIComponent(latest.updated_at):''):'',row,job.scoreRef);
+  if(job.scoreRef&&!latest)throw Error('A score submission cannot create a tournament or session. Refresh the assigned match.');
+  const payload=job.scoreRef?(job.table==='sessions'?{rounds_data:row.rounds_data,updated_at:row.updated_at}:{state:row.state,updated_at:row.updated_at}):row;
+  const result=await request(s,latest?'patch':'post',job.table,latest?q+(latest.updated_at?'&updated_at=eq.'+encodeURIComponent(latest.updated_at):''):'',payload,job.scoreRef);
   if(Array.isArray(result)&&result.length)return {...row,...result[0]};
   if(!latest)throw Error('Server did not confirm creation. Local work is retained.');
   latest=(await request(s,'get',job.table,q+'&select=*'))?.[0];if(!latest)throw Error('The saved tournament was removed on the server. Local work is retained.');row=job.base?merge(job.base,job.row,latest):clone(job.row);row.updated_at=stamp();
