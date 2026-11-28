@@ -86,13 +86,14 @@ function panel(o){
  const requested=['waiting','approval','completed','ranking'].includes(o.tab)?o.tab:'waiting';
  const current=tabs.some(([id,,n])=>id===requested&&(n===null||n>0))?requested:(tabs.find(([,,n])=>n===null||n>0)||tabs[0])[0];
  if(o.matchCards){
-  const active=items.filter(c=>c.match&&!c.match.ready),approval=items.filter(c=>c.match&&c.match.ready),visibleWait=wait.filter(m=>!m.assigned);
+  const visibleWait=wait.filter(m=>!m.assigned);
   const identity=(a,b)=>JSON.stringify([a||[],b||[]]);
-  const represented=new Set(approval.map(c=>identity(c.match.left,c.match.right)));
+  const represented=new Set(items.filter(c=>c.match).map(c=>identity(c.match.left,c.match.right)));
   const remainingReview=review.filter(m=>!represented.has(identity(m.leftPlayers,m.rightPlayers)));
   const section=(title,body,n)=>'<section class="scs-event-match-section"><h3>'+title+' · '+n+'</h3>'+(body||'<p class="scs-tm-live-empty">No matches in this category.</p>')+'</section>';
-  return '<section class="scs-tm-live-center"><div class="scs-tm-live-center-head"><h3>Assign &amp; Approve</h3><div class="scs-tm-court-picker scs-tm-live-count">'+btn('−',attrs.change(-1))+'<b>'+count+'</b>'+btn('+',attrs.change(1))+'</div></div>'+chooser+
-   section('Under approval',approval.map(court).join('')+remainingReview.map(completed).join(''),approval.length+remainingReview.length)+
+  return '<section class="scs-tm-live-center"><section class="scs-assignment-control-card"><div class="scs-tm-live-center-head"><div><h3>Event courts</h3><p>Shared across this event’s stages</p></div><div class="scs-tm-court-picker scs-tm-live-count">'+btn('−',attrs.change(-1))+'<b>'+count+'</b>'+btn('+',attrs.change(1))+'</div></div></section>'+chooser+
+   '<section data-unified-event-courts><h3>Courts · '+count+'</h3>'+numbers.map(n=>{const item=items.find(c=>Number(c.number)===Number(n))||{number:n};return '<section class="scs-unified-court-slot" data-unified-court="'+n+'" data-current-match="'+!!item.match+'"><h4>Court '+esc(n)+'</h4>'+court(item)+'</section>';}).join('')+'</section>'+
+   (remainingReview.length?section('Submitted results without a court',remainingReview.map(completed).join(''),remainingReview.length):'')+
    section('To be assigned',waitingContent(visibleWait,o.orderedWaiting),visibleWait.length)+'</section>';
  }
  const shell='<section class="scs-tm-live-center"><div class="scs-tm-live-center-head"><div><small>LIVE TOURNAMENT</small><h3>Courts &amp; Match Assignment</h3></div><div class="scs-tm-court-picker scs-tm-live-count">'+btn('−',attrs.change(-1))+'<b>'+count+'</b>'+btn('+',attrs.change(1))+'</div></div><div class="scs-tm-live-courts">'+numbers.map(n=>{const c=items.find(x=>x.number===n);return court(c||{number:n})}).join('')+'</div>'+chooser;

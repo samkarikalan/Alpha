@@ -238,3 +238,8 @@ html:root body #scsTournamentContinue .scs-tmgr-tournament-open:is(:active,.scs-
 :is(html:root[data-scs-sport],html) body:is(body,[class]) #scsScoringOverlay #scsScoreServer{display:flex;align-items:center;gap:14px;min-height:66px;box-sizing:border-box;padding:14px 16px!important;border:1px solid #6f91bc!important;border-radius:16px!important;background:linear-gradient(120deg,#203e60,#182f4b)!important;color:#fff!important;font-weight:700;line-height:1.4}
 #scsScoreServer::before{content:'';display:block;flex:0 0 37px;width:37px;height:33px;padding-right:12px;border-right:1px solid #c5d9ed;background:left center/30px 28px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 34' fill='none' stroke='%23eef7ff' stroke-width='1.8'%3E%3Cpath d='M7 3h26l5 28H2ZM5 12h30M3 23h34M20 3v28M11 3l-3 28M29 3l3 28M4 18h32'/%3E%3C/svg%3E")}
 @media(max-width:350px){:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsInitialServiceChoice [data-first-team]{padding-left:36px!important}#scsInitialServiceChoice [data-first-team]::before{left:8px;width:19px;height:19px}#scsInitialServiceChoice strong{font-size:14px}}
+
+[data-unified-event-courts]{display:grid;gap:16px;margin-top:20px}
+[data-unified-event-courts]>h3{margin:0}
+.scs-unified-court-slot>h4{margin:0 0 9px;font-size:17px;color:#c9ddef}
+.scs-unified-court-slot .scs-status-match-card{margin:0}
