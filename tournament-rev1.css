@@ -210,3 +210,14 @@ html:root body #scsTournamentContinue .scs-tmgr-tournament-open:is(:active,.scs-
 :is(html:root[data-scs-sport],html) body:is(body,[class]) :is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay)[data-event-identity] nav.scs-four-tab-nav{background:linear-gradient(110deg,hsl(var(--scs-event-hue,210) 75% 24%),hsl(var(--scs-event-hue,210) 80% 18%))!important;border-top:1px solid hsl(var(--scs-event-hue,210) 65% 44%)!important;box-shadow:0 -3px 14px #0003!important}
 :is(html:root[data-scs-sport],html) body:is(body,[class]) :is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay)[data-event-identity] nav.scs-four-tab-nav>button{color:#f5f8ff!important;background:transparent!important;border-radius:12px!important}
 :is(html:root[data-scs-sport],html) body:is(body,[class]) :is(#scsGroupTournament,#scsTeamTournament,#scsTournamentOverlay)[data-event-identity] nav.scs-four-tab-nav>button.active{color:#fff!important;background:linear-gradient(145deg,hsl(var(--scs-event-hue,210) 80% 43%),hsl(var(--scs-event-hue,210) 85% 32%))!important;box-shadow:inset 0 0 0 1px #ffffff45,0 3px 8px #0004!important}
+
+/* First service uses team buttons; individual S/R choices remain in the score table. */
+:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsInitialServiceChoice{padding:16px!important;margin:12px 0!important;border:1px solid #496481!important;border-radius:16px!important;background:#102a45!important}
+#scsInitialServiceChoice h3{margin:0 0 12px!important;font-size:18px;color:#f2f7ff}
+#scsInitialServiceChoice .scs-first-team-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsInitialServiceChoice [data-first-team]{display:flex!important;flex-direction:column;align-items:flex-start;justify-content:center;gap:8px;min-width:0;min-height:100px;padding:12px!important;border:1px solid #5d7794!important;border-radius:12px!important;text-align:left;background:#172f49!important;color:#eef5ff!important;box-shadow:none!important;font:inherit;cursor:pointer;touch-action:manipulation;overflow-wrap:anywhere}
+:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsInitialServiceChoice [data-first-team="0"][aria-pressed="true"]{background:linear-gradient(135deg,#245ec2,#173a75)!important;border:2px solid #8dbdff!important;box-shadow:0 0 0 2px #72a9ff20!important}
+:is(html:root[data-scs-sport],html) body:is(body,[class]) #scsInitialServiceChoice [data-first-team="1"][aria-pressed="true"]{background:linear-gradient(135deg,#a42b51,#652540)!important;border:2px solid #ffa2bc!important;box-shadow:0 0 0 2px #ff8db220!important}
+#scsInitialServiceChoice .scs-first-team-state{font-size:12px;font-weight:650;color:#d1e4fc}
+#scsInitialServiceChoice strong{font-size:16px;line-height:1.4;color:inherit}
+#scsInitialServiceChoice button:focus-visible{outline:3px solid #86e6f0!important;outline-offset:3px}
