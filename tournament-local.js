@@ -49,7 +49,7 @@ async function sendMatchChanges(job){
   const approved=game.status==='approved'||game.court_center_status==='approved';
   const assigned=game.court&&(!old?.game.court||Number(old.game.court)!==Number(game.court)||!old.game.started_at&&game.started_at||!old.game.startedAt&&game.startedAt);
   let result=row;const token=job.revision+':'+row.id;
-  if(approved)result=await SCSLiveMatches.apply(row,'approve',{},token+':approve');
+  if(approved){if(row.status!=='approved')result=await SCSLiveMatches.apply(row,'approve',{},token+':approve');}
   else if(assigned||row.status==='pending'&&game.court){if(!part.pairs?.every(p=>Array.isArray(p)&&p.length===2))return null;result=await SCSLiveMatches.apply(row,'assign',{court:Number(game.court),pair1:part.pairs[0],pair2:part.pairs[1],ccid:game.ccid,started:game.status==='playing'||game.score_status==='scoring',startedAt:game.started_at||game.startedAt},token+':assign');}
   else if(!game.court&&old?.game.court)return null;
   if(!approved&&game.score&&(!old||!equal(game.score,old.game.score)||game.winner!==old.game.winner))result=await SCSLiveMatches.apply(result,'score',{score:SCSLiveMatches.scorePayload(game.score),winner:game.winner||null,finish:!!game.conduct_finished},token+':score');
@@ -58,9 +58,15 @@ async function sendMatchChanges(job){
  return SCSLiveMatches.overlay(job.table,job.row,results);
 }
 async function saveLiveScore(match,score,winner,finish){const s=scope();if(!s)throw Error('Sign in before saving scores.');await ready(s,true);return enqueue(s,'match_scores',{id:match.remoteMatch.id,matchRef:clone(match.remoteMatch),score:clone(score),winner:winner||null,finish:!!finish});}
+async function approveLiveMatch(match){
+ const s=scope();if(!s)throw Error('Sign in before approving.');await ready(s);
+ await enqueue(s,'match_actions',{id:match.id,operation:'approve',matchRef:{id:match.id,tournamentId:match.tournament_id,matchKey:match.match_key}});
+ await confirmRecord('match_actions',match.id);await SCSLiveMatches.refresh(true);return SCSLiveMatches.values().find(row=>row.id===match.id);
+}
 async function sendLiveScoreJob(job){
  if(!await SCSLiveMatches.enabled())throw Error('The match-sync Worker is unavailable. Keep the saved result and retry after updating it.');
  const all=await SCSLiveMatches.refresh(),match=all.find(m=>m.id===job.row.id);if(!match)throw Error('Assigned match not found.');
+ if(job.row.operation==='approve'){if(match.status!=='approved')await SCSLiveMatches.apply(match,'approve',{},job.revision);return clone(job.row);}
  await SCSLiveMatches.apply(match,'score',{score:SCSLiveMatches.scorePayload(job.row.score),winner:job.row.winner,finish:job.row.finish},job.revision);
  return clone(job.row);
 }
@@ -167,7 +173,7 @@ function mergeMatchScore(job,latest){
  const fields=job.table==='sessions'?['score','score_status','winner','conduct_finished']:['score','winner','status','remoteScoreRevision','conduct_finished'];
  for(const field of fields)if(Object.hasOwn(next,field))target[field]=clone(next[field]);return row;
 }
-async function send(job){const s=job.owner;assertScope(s);if(job.table==='match_scores')return sendLiveScoreJob(job);if(['sessions','tournaments'].includes(job.table)){const compact=await sendMatchChanges(job);if(compact)return compact;}const q='id=eq.'+encodeURIComponent(job.row.id)+'&club_id=eq.'+encodeURIComponent(s.clubId);let latest=(await request(s,'get',job.table,q+'&select=*'))?.[0];assertScope(s);
+async function send(job){const s=job.owner;assertScope(s);if(job.table==='match_scores'||job.table==='match_actions')return sendLiveScoreJob(job);if(['sessions','tournaments'].includes(job.table)){const compact=await sendMatchChanges(job);if(compact)return compact;}const q='id=eq.'+encodeURIComponent(job.row.id)+'&club_id=eq.'+encodeURIComponent(s.clubId);let latest=(await request(s,'get',job.table,q+'&select=*'))?.[0];assertScope(s);
  if(job.remove){if(latest)await request(s,'delete',job.table,q);return null;}
  if(latest&&job.table==='sessions'&&job.scoreRef){
   const proposed=(job.row.rounds_data||[]).flatMap(r=>r.games||[]);
@@ -266,7 +272,7 @@ async function openPanel(){
 }
 
 async function readRemoteScores(){const s=scope();if(s&&window.SCSLiveMatches&&await SCSLiveMatches.enabled()){await SCSLiveMatches.refresh(true);return rowsFor(s,'tournaments').filter(r=>!r.state?._scsMainTournament&&['group','team'].includes(r.format));}if(!s)throw Error('Select a club to refresh scores.');await ready(s);const rows=await raw.get('tournaments','club_id=eq.'+encodeURIComponent(s.clubId)+'&status=eq.live&select=id,club_id,format,state');assertScope(s);return (rows||[]).filter(row=>row.club_id===s.clubId);}
-window.SCSTournamentLocal=Object.freeze({ingestLiveMatches,saveLiveScore,readRemoteScores,readServerRows,confirmRecord,ready,settled,saveTournament,sync,importLegacy,status,describe,merge,openPanel,exportBackup,recordCourtAction,finishCourtAction,failCourtAction,saveSession:async row=>{const s=scope();if(!s)throw Error('Select a club before saving.');await ready(s,true);return enqueue(s,'sessions',row);},listSessions:async()=>{await ready();const s=scope();return s?rowsFor(s,'sessions'):[];},isTournamentSession:isSession});
+window.SCSTournamentLocal=Object.freeze({ingestLiveMatches,saveLiveScore,approveLiveMatch,readRemoteScores,readServerRows,confirmRecord,ready,settled,saveTournament,sync,importLegacy,status,describe,merge,openPanel,exportBackup,recordCourtAction,finishCourtAction,failCourtAction,saveSession:async row=>{const s=scope();if(!s)throw Error('Select a club before saving.');await ready(s,true);return enqueue(s,'sessions',row);},listSessions:async()=>{await ready();const s=scope();return s?rowsFor(s,'sessions'):[];},isTournamentSession:isSession});
 window.addEventListener('online',()=>sync().catch(()=>{}));window.addEventListener('storage',()=>ready().then(notify).catch(()=>{}));document.addEventListener('visibilitychange',()=>{if(!document.hidden)ready().then(()=>sync({background:true})).catch(()=>{});});
 document.addEventListener('click',event=>{if(!event.target.closest?.('#scsTournamentManager,#scsTournamentContinue,#scsTournamentOverlay,#scsGroupTournament,#scsTeamTournament'))return;const s=scope();if(!s||hydrated.has(s.key))return;event.preventDefault();event.stopImmediatePropagation();const target=event.target;ready().then(()=>{if(target.isConnected)target.click();}).catch(e=>alert(e.message));},true);
 function init(){ready().then(()=>importLegacy()).then(()=>sync({background:true})).catch(e=>{dbError=e.message;notify();});new MutationObserver(renderStatus).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});}
