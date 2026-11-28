@@ -13,6 +13,7 @@ function showConfirmation(title,court,details){
  const location=document.createElement('div');location.className='scs-court-confirmation-location';location.textContent='Court '+court+(details?.started?' · Ready for scoring':' · Ready to start');
  const hint=document.createElement('div');hint.className='scs-court-confirmation-hint';hint.textContent=details?.started?(details.synced?'Available in Scoreboard':'Saved on this device · sync pending'):(typeof t === 'function' ? t('scsAvailableMatchCenter') : "Available in Match Center");
  panel.append(mark,heading,match,location,hint);notice.appendChild(panel);document.body.appendChild(notice);confirmation=notice;
+ if(details?.delivery)Promise.resolve(details.delivery).then(synced=>{if(confirmation!==notice)return;if(synced)hint.textContent='Available in Scoreboard';}).catch(()=>{});
  confirmationTimer=setTimeout(()=>{if(confirmation===notice)clearConfirmation()},details?.started?(details.synced?1800:4000):1500);
 }
 function open(opts){
@@ -21,7 +22,7 @@ function open(opts){
  const modal=document.createElement('section');modal.className='scs-court-popup';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-label','Assign Court');
  const head=document.createElement('div');head.className='scs-court-popup-head';
  const h=document.createElement('h3');h.textContent=o.startOnAssign?'Assign + Start':(typeof t === 'function' ? t('scsAssignCourt') : "Assign Court");head.appendChild(h);
- const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Close');x.onclick=()=>{if(!pending)close();};head.appendChild(x);modal.appendChild(head);
+ const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Close');x.onclick=()=>close();;head.appendChild(x);modal.appendChild(head);
  const subtitle=document.createElement('p');subtitle.textContent=String(o.title||'');modal.appendChild(subtitle);
  // Optional organizer password controls. The trusted worker will provide the
  // load/save callbacks; never persist credentials in browser storage or match state.
@@ -43,12 +44,12 @@ function open(opts){
  (o.courts||[]).forEach(c=>{const b=document.createElement('button');b.type='button';b.className='scs-court-popup-option';b.disabled=!!c.occupied;b.textContent='Court '+c.number+' · '+(c.occupied?'Occupied':o.startOnAssign?'Assign + Start':'Free');
  b.onclick=()=>{
   if(b.disabled||pending||active!==overlay)return;
-  pending=true;errorStatus.textContent=o.startOnAssign?'Saving and sending to scoreboard…':'';modal.setAttribute('aria-busy','true');choices.querySelectorAll('button').forEach(button=>button.disabled=true);
-  const finish=ok=>{if(active!==overlay)return;if(ok!==false){close('assigned');showConfirmation(o.title,c.number,o.startOnAssign?{started:true,synced:ok?.synced!==false}:null)}else{pending=false;modal.removeAttribute('aria-busy');choices.querySelectorAll('button').forEach((button,i)=>{button.disabled=!!o.courts[i].occupied})}};
+  pending=true;cancel.textContent='Close · saving continues';errorStatus.textContent=o.startOnAssign?'Saving on this device…':'';modal.setAttribute('aria-busy','true');choices.querySelectorAll('button').forEach(button=>button.disabled=true);
+  const finish=ok=>{if(active!==overlay)return;if(ok!==false){close('assigned');showConfirmation(o.title,c.number,o.startOnAssign?{started:true,synced:ok?.synced!==false,delivery:ok?.delivery}:null)}else{pending=false;cancel.textContent='Cancel';modal.removeAttribute('aria-busy');choices.querySelectorAll('button').forEach((button,i)=>{button.disabled=!!o.courts[i].occupied})}};
   try{const result=o.onChoose&&o.onChoose(c.number);if(result&&typeof result.then==='function')result.then(finish).catch(error=>{errorStatus.textContent=error?.message||'Could not assign this match. Please retry.';finish(false);});else finish(result)}catch(e){console.error('Court assignment failed:',e);errorStatus.textContent=e.message||'Could not assign this match.';finish(false)}
  };choices.appendChild(b)});
  modal.appendChild(choices);
- const cancel=document.createElement('button');cancel.type='button';cancel.className='scs-court-popup-cancel';cancel.textContent='Cancel';cancel.onclick=()=>{if(!pending)close();};modal.appendChild(cancel);
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='scs-court-popup-cancel';cancel.textContent='Cancel';cancel.onclick=()=>close();;modal.appendChild(cancel);
  overlay.appendChild(modal);overlay.onclick=e=>{if(e.target===overlay&&!pending)close()};
  overlay.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();if(!pending)close()}});
  document.body.appendChild(overlay);x.focus();return overlay;

@@ -63,7 +63,8 @@ async function publishAssignment(){
  if(!window.SCSTournamentLocal)return {synced:false};
  await SCSTournamentLocal.settled();
  if(navigator.onLine===false)return {synced:false};
- try{return {synced:await SCSTournamentLocal.sync()};}catch(error){console.warn('Assignment saved locally; scoreboard sync pending:',error.message);return {synced:false};}
+ const delivery=Promise.resolve().then(()=>SCSTournamentLocal.sync()).catch(error=>{console.warn('Assignment saved locally; scoreboard sync pending:',error.message);return false;});
+ return {synced:false,delivery};
 }
 window.SCSTournamentScores={list,historyApprovals,filterCurrentSessions,update,merge,refresh,publishAssignment};
 function automatic(){if(!document.hidden&&visibleEvent())refresh().catch(error=>console.warn('Tournament score refresh:',error.message));}
